@@ -2,7 +2,7 @@
 struct Input 
 {
     float2 uv_Tex1;
-    float4 color : COLOR;
+    float4 color;
     float3 worldPos;
     float3 worldNormal;
 #if (_FLOW1 || _FLOW2 || _FLOW3)
@@ -10,6 +10,7 @@ struct Input
 #endif
 
 };
+
 
 // @NOTE
 // unity maximum ps_5_0 sampler register index
