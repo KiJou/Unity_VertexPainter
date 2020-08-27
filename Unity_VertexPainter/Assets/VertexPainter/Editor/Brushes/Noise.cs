@@ -220,10 +220,7 @@ namespace VertexPainter.SimplexNoise
 		 138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180
 	  };
 
-		private static int FastFloor(float x)
-		{
-			return (x > 0) ? ((int)x) : (((int)x) - 1);
-		}
+		private static int FastFloor(float x) => (x > 0) ? ((int)x) : (((int)x) - 1);
 
 		private static int Mod(int x, int m)
 		{

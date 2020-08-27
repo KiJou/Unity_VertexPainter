@@ -8,15 +8,24 @@ namespace VertexPainter
 	[System.Serializable]
 	public class BakeAO : IVertexPainterUtility
 	{
-		public string GetName()
-		{
-			return "Ambient Occlusion";
-		}
+		public int aoSamples = 512;
+		public Vector2 aoRange = new Vector2(0.0001f, 1.5f);
+		public float aoIntensity = 2.0f;
+		public bool bakeLighting;
+		public Color aoLightAmbient = new Color(0.05f, 0.05f, 0.05f, 1);
 
-		public bool GetEnable()
+		public enum AOBakeMode
 		{
-			return false;
+			Replace = 0,
+			Multiply
 		}
+		public AOBakeMode aoBakeMode = AOBakeMode.Replace;
+
+		private RaycastHit hit = new RaycastHit();
+
+		public string GetName() => "Ambient Occlusion";
+
+		public bool GetEnable() => false;
 
 		public void OnGUI(PaintJob[] jobs)
 		{
@@ -42,23 +51,7 @@ namespace VertexPainter
 			}
 		}
 
-		public int aoSamples = 512;
-		public Vector2 aoRange = new Vector2(0.0001f, 1.5f);
-		public float aoIntensity = 2.0f;
-		public bool bakeLighting;
-		public Color aoLightAmbient = new Color(0.05f, 0.05f, 0.05f, 1);
-
-		public enum AOBakeMode
-		{
-			Replace = 0,
-			Multiply
-		}
-		public AOBakeMode aoBakeMode = AOBakeMode.Replace;
-
-
-		RaycastHit hit = new RaycastHit();
-
-		void ApplyAOLight(ref Color c, Light l, Vector3 pos, Vector3 n)
+		private void ApplyAOLight(ref Color c, Light l, Vector3 pos, Vector3 n)
 		{
 			if (!l.isActiveAndEnabled)
 			{
@@ -87,7 +80,7 @@ namespace VertexPainter
 			c.b += l.color.b * intensity;
 		}
 
-		void DoBakeAO(PaintJob[] jobs, VertexPainterWindow window)
+		private void DoBakeAO(PaintJob[] jobs, VertexPainterWindow window)
 		{
 			Light[] aoLights = null;
 			if (bakeLighting)

@@ -7,15 +7,22 @@ namespace VertexPainter
 {
 	public class MultiplyChannelValues : IVertexPainterUtility
 	{
-		public string GetName()
+		public enum BakeChannel
 		{
-			return "Multiply Channel Values";
+			Position = 0,
+			Color,
+			UV0,
+			UV1,
+			UV2,
+			UV3
 		}
 
-		public bool GetEnable()
-		{
-			return false;
-		}
+		private float multValue;
+		private BakeChannel bakeChannel = BakeChannel.Color;
+
+		public string GetName() => "Multiply Channel Values";
+
+		public bool GetEnable() => false;
 
 		public void OnGUI(PaintJob[] jobs)
 		{
@@ -32,21 +39,7 @@ namespace VertexPainter
 			EditorGUILayout.EndHorizontal();
 		}
 
-
-		public enum BakeChannel
-		{
-			Position = 0,
-			Color,
-			UV0,
-			UV1,
-			UV2,
-			UV3
-		}
-
-		float multValue;
-		BakeChannel bakeChannel = BakeChannel.Color;
-
-		void InitBakeChannel(BakeChannel bc, PaintJob[] jobs)
+		private void InitBakeChannel(BakeChannel bc, PaintJob[] jobs)
 		{
 			foreach (PaintJob job in jobs)
 			{
@@ -101,7 +94,7 @@ namespace VertexPainter
 			}
 		}
 
-		void Bake(PaintJob[] jobs)
+		private void Bake(PaintJob[] jobs)
 		{
 			InitBakeChannel(bakeChannel, jobs);
 

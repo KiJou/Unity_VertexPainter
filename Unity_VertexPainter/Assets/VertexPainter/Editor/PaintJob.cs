@@ -12,6 +12,7 @@ namespace VertexPainter
 		public Vector3[] verts;
 		public Vector3[] normals;
 		public Vector4[] tangents;
+		public List<int>[] vertexConnections;
 
 		public Vector3 GetPosition(int i)
 		{
@@ -34,11 +35,14 @@ namespace VertexPainter
 		public Vector4 GetTangent(int i)
 		{
 			if (stream.tangents != null && stream.tangents.Length == verts.Length)
+			{
 				return stream.tangents[i];
+			}
 			return tangents[i];
 		}
 
-		public bool HasStream() { return _stream != null; }
+		public bool HasStream() => _stream != null;
+
 		public bool HasData()
 		{
 			if (_stream == null)
@@ -98,6 +102,7 @@ namespace VertexPainter
 			{
 				vertexConnections[i] = new List<int>();
 			}
+
 			int[] tris = meshFilter.sharedMesh.triangles;
 			for (int i = 0; i < tris.Length; i = i + 3)
 			{
@@ -136,8 +141,6 @@ namespace VertexPainter
 				}
 			}
 		}
-
-		public List<int>[] vertexConnections;
 
 		public PaintJob(MeshFilter mf, Renderer r)
 		{

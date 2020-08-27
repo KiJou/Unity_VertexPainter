@@ -17,10 +17,7 @@ namespace VertexPainter
 			Positions = 64
 		}
 
-		public virtual Color GetPreviewColor()
-		{
-			return Color.yellow;
-		}
+		public virtual Color GetPreviewColor() => Color.yellow;
 
 		public virtual Channels GetChannels()
 		{

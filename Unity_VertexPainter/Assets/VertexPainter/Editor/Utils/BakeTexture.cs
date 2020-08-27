@@ -7,15 +7,37 @@ namespace VertexPainter
 {
 	public class BakeTexture : IVertexPainterUtility
 	{
-		public string GetName()
+		public enum BakeChannel
 		{
-			return "Texture Baker";
+			None,
+			Color,
+			UV0,
+			UV1,
+			UV2,
+			UV3
 		}
 
-		public bool GetEnable()
+		public enum BakeSourceUV
 		{
-			return false;
+			UV0,
+			UV1,
+			UV2,
+			UV3,
+			WorldSpaceXY,
+			WorldSpaceXZ,
+			WorldSpaceYZ
 		}
+
+		private Texture2D bakingTex = null;
+		private BakeSourceUV bakeSourceUV = BakeSourceUV.UV0;
+		private BakeChannel bakeChannel = BakeChannel.Color;
+		private Vector2 worldSpaceLower = new Vector2(0, 0);
+		private Vector2 worldSpaceUpper = new Vector2(1, 1);
+
+
+		public string GetName() => "Texture Baker";
+
+		public bool GetEnable() => false;
 
 		public void OnGUI(PaintJob[] jobs)
 		{
@@ -45,36 +67,7 @@ namespace VertexPainter
 			EditorGUILayout.EndHorizontal();
 		}
 
-		public enum BakeChannel
-		{
-			None,
-			Color,
-			UV0,
-			UV1,
-			UV2,
-			UV3
-		}
-
-		public enum BakeSourceUV
-		{
-			UV0,
-			UV1,
-			UV2,
-			UV3,
-			WorldSpaceXY,
-			WorldSpaceXZ,
-			WorldSpaceYZ
-		}
-
-		Texture2D bakingTex = null;
-		BakeSourceUV bakeSourceUV = BakeSourceUV.UV0;
-		BakeChannel bakeChannel = BakeChannel.Color;
-		Vector2 worldSpaceLower = new Vector2(0, 0);
-		Vector2 worldSpaceUpper = new Vector2(1, 1);
-
-
-
-		void InitBakeChannel(BakeChannel bc, PaintJob[] jobs)
+		private void InitBakeChannel(BakeChannel bc, PaintJob[] jobs)
 		{
 			foreach (PaintJob job in jobs)
 			{
@@ -118,7 +111,7 @@ namespace VertexPainter
 			}
 		}
 
-		void BakeColor(PaintJob job, BakeChannel bc, Vector4 val, int i)
+		private void BakeColor(PaintJob job, BakeChannel bc, Vector4 val, int i)
 		{
 			switch (bc)
 			{
@@ -149,7 +142,7 @@ namespace VertexPainter
 			}
 		}
 
-		void BakeFromTexture(PaintJob[] jobs)
+		private void BakeFromTexture(PaintJob[] jobs)
 		{
 			InitBakeChannel(bakeChannel, jobs);
 			int w = bakingTex.width;

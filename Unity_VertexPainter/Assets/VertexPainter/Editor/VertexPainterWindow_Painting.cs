@@ -8,13 +8,141 @@ namespace VertexPainter
 	public partial class VertexPainterWindow : EditorWindow
 	{
 		// for external tools
-		public System.Action<PaintJob[]> OnBeginStroke;
-		public System.Action<PaintJob, bool> OnStokeModified;  // bool is true when doing a fill or other non-bounded opperation
-		public System.Action OnEndStroke;
+		public System.Action<PaintJob[]> OnBeginStroke = default;
 
+		// bool is true when doing a fill or other non-bounded opperation
+		public System.Action<PaintJob, bool> OnStokeModified = default;
+		public System.Action OnEndStroke = default;
 
+		public enum FlowTarget
+		{
+			ColorRG = 0,
+			ColorBA,
+			UV0_XY,
+			UV0_ZW,
+			UV1_XY,
+			UV1_ZW,
+			UV2_XY,
+			UV2_ZW,
+			UV3_XY,
+			UV3_ZW
+		}
+
+		public enum FlowBrushType
+		{
+			Direction = 0,
+			Soften
+		}
+
+		public enum FlowVisualization
+		{
+			Arrows = 0,
+			Water,
+		}
+
+		public enum BrushTarget
+		{
+			Color = 0,
+			ValueR,
+			ValueG,
+			ValueB,
+			ValueA,
+			UV0_X,
+			UV0_Y,
+			UV0_Z,
+			UV0_W,
+			UV1_X,
+			UV1_Y,
+			UV1_Z,
+			UV1_W,
+			UV2_X,
+			UV2_Y,
+			UV2_Z,
+			UV2_W,
+			UV3_X,
+			UV3_Y,
+			UV3_Z,
+			UV3_W,
+			UV0_AsColor,
+			UV1_AsColor,
+			UV2_AsColor,
+			UV3_AsColor
+		}
+
+		public enum BrushColorMode
+		{
+			Normal,
+			Overlay,
+			Lighten,
+			Darken,
+			Saturate,
+			Desaturate
+		}
+
+		public enum VertexMode
+		{
+			Adjust,
+			Smear,
+			Smooth,
+			HistoryEraser,
+		}
+
+		public enum VertexContraint
+		{
+			Camera,
+			Normal,
+			X,
+			Y,
+			Z,
+		}
+
+		public enum BrushVisualization
+		{
+			Sphere,
+			Disk
+		}
+
+		// only really used for AO, seems like a bit overkill, but it makes things easier..
+		public delegate void Multiplier(VertexInstanceStream s, int idx, ref object x);
 
 		public delegate void Lerper(PaintJob j, int idx, ref object v, float strength);
+
+		public bool enabled = default;
+		public Vector3 oldpos = Vector3.zero;
+		public float brushSize = 1;
+		public float brushFlow = 8;
+		public float brushFalloff = 1; // linear
+		public Color brushColor = Color.red;
+		public int brushValue = 255;
+		public float floatBrushValue = 1.0f;
+		public Vector2 uvVisualizationRange = new Vector2(0, 1);
+		public BrushTarget brushMode = BrushTarget.Color;
+		public BrushColorMode brushColorMode = BrushColorMode.Normal;
+		public VertexMode vertexMode = VertexMode.Adjust;
+		public FlowTarget flowTarget = FlowTarget.ColorRG;
+		public FlowBrushType flowBrushType = FlowBrushType.Direction;
+		public FlowVisualization flowVisualization = FlowVisualization.Water;
+		public bool flowRemap01 = true;
+		public bool pull = false;
+		public VertexContraint vertexContraint = VertexContraint.Normal;
+		public bool showVertexShader = false;
+		public bool showVertexPoints = false;
+		public float showVertexSize = 1;
+		public Color showVertexColor = Color.white;
+		public bool showNormals = false;
+		public bool showTangents = false;
+
+		public VertexPainterCustomBrush customBrush = default;
+
+		public BrushVisualization brushVisualization = BrushVisualization.Sphere;
+		public PaintJob[] jobs = new PaintJob[0];
+		public bool[] jobEdits = new bool[0];
+
+		private double deltaTime = 0;
+		private double lastTime = 0;
+		private bool painting = false;
+		private Vector3 oldMousePosition = default;
+		private Vector3 strokeDir = Vector3.zero;
 
 		static void FlowColorRG(PaintJob j, int idx, ref object v, float r)
 		{
@@ -24,6 +152,7 @@ namespace VertexPainter
 			s.colors[idx].r = Mathf.Lerp(c.r, vv.x, r);
 			s.colors[idx].g = Mathf.Lerp(c.g, vv.y, r);
 		}
+
 		static void FlowColorBA(PaintJob j, int idx, ref object v, float r)
 		{
 			Vector2 vv = (Vector2)v;
@@ -32,6 +161,7 @@ namespace VertexPainter
 			s.colors[idx].b = Mathf.Lerp(c.b, vv.x, r);
 			s.colors[idx].a = Mathf.Lerp(c.a, vv.y, r);
 		}
+
 		static void FlowUV0_XY(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -41,6 +171,7 @@ namespace VertexPainter
 			o.y = Mathf.Lerp(o.y, t.y, r);
 			s.uv0[idx] = o;
 		}
+
 		static void FlowUV0_ZW(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -50,6 +181,7 @@ namespace VertexPainter
 			o.w = Mathf.Lerp(o.w, t.y, r);
 			s.uv0[idx] = o;
 		}
+
 		static void FlowUV1_XY(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -59,6 +191,7 @@ namespace VertexPainter
 			o.y = Mathf.Lerp(o.y, t.y, r);
 			s.uv1[idx] = o;
 		}
+
 		static void FlowUV1_ZW(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -68,6 +201,7 @@ namespace VertexPainter
 			o.w = Mathf.Lerp(o.w, t.y, r);
 			s.uv1[idx] = o;
 		}
+
 		static void FlowUV2_XY(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -77,6 +211,7 @@ namespace VertexPainter
 			o.y = Mathf.Lerp(o.y, t.y, r);
 			s.uv2[idx] = o;
 		}
+
 		static void FlowUV2_ZW(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -86,6 +221,7 @@ namespace VertexPainter
 			o.w = Mathf.Lerp(o.w, t.y, r);
 			s.uv2[idx] = o;
 		}
+
 		static void FlowUV3_XY(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -95,6 +231,7 @@ namespace VertexPainter
 			o.y = Mathf.Lerp(o.y, t.y, r);
 			s.uv3[idx] = o;
 		}
+
 		static void FlowUV3_ZW(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -104,11 +241,13 @@ namespace VertexPainter
 			o.w = Mathf.Lerp(o.w, t.y, r);
 			s.uv3[idx] = o;
 		}
+
 		static void ColorRGBA(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
 			s.colors[idx] = Color.Lerp(s.colors[idx], (Color)v, r);
 		}
+
 		static void ColorRGBASaturate(PaintJob j, int idx, ref object v, float r)
 		{
 			var st = j.stream;
@@ -118,6 +257,7 @@ namespace VertexPainter
 			Color res = Color.HSVToRGB(h, s, b);
 			st.colors[idx] = new Color(res.r, res.g, res.b, st.colors[idx].a);
 		}
+
 		static void ColorRGBADesaturate(PaintJob j, int idx, ref object v, float r)
 		{
 			var st = j.stream;
@@ -127,6 +267,7 @@ namespace VertexPainter
 			Color res = Color.HSVToRGB(h, s, b);
 			st.colors[idx] = new Color(res.r, res.g, res.b, st.colors[idx].a);
 		}
+
 		static void ColorRGBALighten(PaintJob j, int idx, ref object v, float r)
 		{
 			var st = j.stream;
@@ -136,6 +277,7 @@ namespace VertexPainter
 			Color res = Color.HSVToRGB(h, s, b);
 			st.colors[idx] = new Color(res.r, res.g, res.b, st.colors[idx].a);
 		}
+
 		static void ColorRGBADarken(PaintJob j, int idx, ref object v, float r)
 		{
 			var st = j.stream;
@@ -145,6 +287,7 @@ namespace VertexPainter
 			Color res = Color.HSVToRGB(h, s, b);
 			st.colors[idx] = new Color(res.r, res.g, res.b, st.colors[idx].a);
 		}
+
 		static void ColorRGBAOverlay(PaintJob j, int idx, ref object v, float r)
 		{
 			var st = j.stream;
@@ -155,26 +298,31 @@ namespace VertexPainter
 			c0.b = Mathf.Lerp(c0.b, c0.b < 0.5f ? (2.0f * c0.b * t.b) : (1.0f - 2.0f * (1.0f - c0.b) * (1.0f - t.b)), r);
 			st.colors[idx] = c0;
 		}
+
 		static void ColorR(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
 			s.colors[idx].r = Mathf.Lerp(s.colors[idx].r, (float)v, r);
 		}
+
 		static void ColorG(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
 			s.colors[idx].g = Mathf.Lerp(s.colors[idx].g, (float)v, r);
 		}
+
 		static void ColorB(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
 			s.colors[idx].b = Mathf.Lerp(s.colors[idx].b, (float)v, r);
 		}
+
 		static void ColorA(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
 			s.colors[idx].a = Mathf.Lerp(s.colors[idx].a, (float)v, r);
 		}
+
 		static void UV0_X(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -182,6 +330,7 @@ namespace VertexPainter
 			vec.x = Mathf.Lerp(vec.x, (float)v, r);
 			s.uv0[idx] = vec;
 		}
+
 		static void UV0_Y(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -189,6 +338,7 @@ namespace VertexPainter
 			vec.y = Mathf.Lerp(vec.y, (float)v, r);
 			s.uv0[idx] = vec;
 		}
+
 		static void UV0_Z(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -196,6 +346,7 @@ namespace VertexPainter
 			vec.z = Mathf.Lerp(vec.z, (float)v, r);
 			s.uv0[idx] = vec;
 		}
+
 		static void UV0_W(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -203,6 +354,7 @@ namespace VertexPainter
 			vec.w = Mathf.Lerp(vec.w, (float)v, r);
 			s.uv0[idx] = vec;
 		}
+
 		static void UV1_X(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -210,6 +362,7 @@ namespace VertexPainter
 			vec.x = Mathf.Lerp(vec.x, (float)v, r);
 			s.uv1[idx] = vec;
 		}
+
 		static void UV1_Y(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -217,6 +370,7 @@ namespace VertexPainter
 			vec.y = Mathf.Lerp(vec.y, (float)v, r);
 			s.uv1[idx] = vec;
 		}
+
 		static void UV1_Z(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -224,6 +378,7 @@ namespace VertexPainter
 			vec.z = Mathf.Lerp(vec.z, (float)v, r);
 			s.uv1[idx] = vec;
 		}
+
 		static void UV1_W(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -231,6 +386,7 @@ namespace VertexPainter
 			vec.w = Mathf.Lerp(vec.w, (float)v, r);
 			s.uv1[idx] = vec;
 		}
+
 		static void UV2_X(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -238,6 +394,7 @@ namespace VertexPainter
 			vec.x = Mathf.Lerp(vec.x, (float)v, r);
 			s.uv2[idx] = vec;
 		}
+
 		static void UV2_Y(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -245,6 +402,7 @@ namespace VertexPainter
 			vec.y = Mathf.Lerp(vec.y, (float)v, r);
 			s.uv2[idx] = vec;
 		}
+
 		static void UV2_Z(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -252,6 +410,7 @@ namespace VertexPainter
 			vec.z = Mathf.Lerp(vec.z, (float)v, r);
 			s.uv2[idx] = vec;
 		}
+
 		static void UV2_W(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -259,6 +418,7 @@ namespace VertexPainter
 			vec.w = Mathf.Lerp(vec.w, (float)v, r);
 			s.uv2[idx] = vec;
 		}
+
 		static void UV3_X(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -266,6 +426,7 @@ namespace VertexPainter
 			vec.x = Mathf.Lerp(vec.x, (float)v, r);
 			s.uv3[idx] = vec;
 		}
+
 		static void UV3_Y(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -273,6 +434,7 @@ namespace VertexPainter
 			vec.y = Mathf.Lerp(vec.y, (float)v, r);
 			s.uv3[idx] = vec;
 		}
+
 		static void UV3_Z(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -280,6 +442,7 @@ namespace VertexPainter
 			vec.z = Mathf.Lerp(vec.z, (float)v, r);
 			s.uv3[idx] = vec;
 		}
+
 		static void UV3_W(PaintJob j, int idx, ref object v, float r)
 		{
 			var s = j.stream;
@@ -319,6 +482,7 @@ namespace VertexPainter
 			Vector4 asVector = new Vector4(c.r, c.g, c.b, c.a);
 			s.uv3[idx] = Vector4.Lerp(s.uv3[idx], asVector, r);
 		}
+
 		static void UV0_AsColorRGBASaturate(PaintJob j, int idx, ref object v, float r)
 		{
 			var st = j.stream;
@@ -330,6 +494,7 @@ namespace VertexPainter
 			c = Color.HSVToRGB(h, s, b);
 			st.uv0[idx] = new Vector4(c.r, c.g, c.b, vec.w);
 		}
+
 		static void UV0_AsColorRGBADesaturate(PaintJob j, int idx, ref object v, float r)
 		{
 			var st = j.stream;
@@ -341,6 +506,7 @@ namespace VertexPainter
 			c = Color.HSVToRGB(h, s, b);
 			st.uv0[idx] = new Vector4(c.r, c.g, c.b, vec.w);
 		}
+
 		static void UV0_AsColorRGBALighten(PaintJob j, int idx, ref object v, float r)
 		{
 			var st = j.stream;
@@ -352,6 +518,7 @@ namespace VertexPainter
 			c = Color.HSVToRGB(h, s, b);
 			st.uv0[idx] = new Vector4(c.r, c.g, c.b, vec.w);
 		}
+
 		static void UV0_AsColorRGBADarken(PaintJob j, int idx, ref object v, float r)
 		{
 			var st = j.stream;
@@ -363,6 +530,7 @@ namespace VertexPainter
 			c = Color.HSVToRGB(h, s, b);
 			st.uv0[idx] = new Vector4(c.r, c.g, c.b, vec.w);
 		}
+
 		static void UV0_AsColorRGBAOverlay(PaintJob j, int idx, ref object v, float r)
 		{
 			var st = j.stream;
@@ -386,6 +554,7 @@ namespace VertexPainter
 			c = Color.HSVToRGB(h, s, b);
 			st.uv1[idx] = new Vector4(c.r, c.g, c.b, vec.w);
 		}
+
 		static void UV1_AsColorRGBADesaturate(PaintJob j, int idx, ref object v, float r)
 		{
 			var st = j.stream;
@@ -397,6 +566,7 @@ namespace VertexPainter
 			c = Color.HSVToRGB(h, s, b);
 			st.uv1[idx] = new Vector4(c.r, c.g, c.b, vec.w);
 		}
+
 		static void UV1_AsColorRGBALighten(PaintJob j, int idx, ref object v, float r)
 		{
 			var st = j.stream;
@@ -408,6 +578,7 @@ namespace VertexPainter
 			c = Color.HSVToRGB(h, s, b);
 			st.uv1[idx] = new Vector4(c.r, c.g, c.b, vec.w);
 		}
+
 		static void UV1_AsColorRGBADarken(PaintJob j, int idx, ref object v, float r)
 		{
 			var st = j.stream;
@@ -419,6 +590,7 @@ namespace VertexPainter
 			c = Color.HSVToRGB(h, s, b);
 			st.uv1[idx] = new Vector4(c.r, c.g, c.b, vec.w);
 		}
+
 		static void UV1_AsColorRGBAOverlay(PaintJob j, int idx, ref object v, float r)
 		{
 			var st = j.stream;
@@ -442,6 +614,7 @@ namespace VertexPainter
 			c = Color.HSVToRGB(h, s, b);
 			st.uv2[idx] = new Vector4(c.r, c.g, c.b, vec.w);
 		}
+
 		static void UV2_AsColorRGBADesaturate(PaintJob j, int idx, ref object v, float r)
 		{
 			var st = j.stream;
@@ -453,6 +626,7 @@ namespace VertexPainter
 			c = Color.HSVToRGB(h, s, b);
 			st.uv2[idx] = new Vector4(c.r, c.g, c.b, vec.w);
 		}
+
 		static void UV2_AsColorRGBALighten(PaintJob j, int idx, ref object v, float r)
 		{
 			var st = j.stream;
@@ -464,6 +638,7 @@ namespace VertexPainter
 			c = Color.HSVToRGB(h, s, b);
 			st.uv2[idx] = new Vector4(c.r, c.g, c.b, vec.w);
 		}
+
 		static void UV2_AsColorRGBADarken(PaintJob j, int idx, ref object v, float r)
 		{
 			var st = j.stream;
@@ -475,6 +650,7 @@ namespace VertexPainter
 			c = Color.HSVToRGB(h, s, b);
 			st.uv2[idx] = new Vector4(c.r, c.g, c.b, vec.w);
 		}
+
 		static void UV2_AsColorRGBAOverlay(PaintJob j, int idx, ref object v, float r)
 		{
 			var st = j.stream;
@@ -498,6 +674,7 @@ namespace VertexPainter
 			c = Color.HSVToRGB(h, s, b);
 			st.uv3[idx] = new Vector4(c.r, c.g, c.b, vec.w);
 		}
+
 		static void UV3_AsColorRGBADesaturate(PaintJob j, int idx, ref object v, float r)
 		{
 			var st = j.stream;
@@ -509,6 +686,7 @@ namespace VertexPainter
 			c = Color.HSVToRGB(h, s, b);
 			st.uv3[idx] = new Vector4(c.r, c.g, c.b, vec.w);
 		}
+
 		static void UV3_AsColorRGBALighten(PaintJob j, int idx, ref object v, float r)
 		{
 			var st = j.stream;
@@ -520,6 +698,7 @@ namespace VertexPainter
 			c = Color.HSVToRGB(h, s, b);
 			st.uv3[idx] = new Vector4(c.r, c.g, c.b, vec.w);
 		}
+
 		static void UV3_AsColorRGBADarken(PaintJob j, int idx, ref object v, float r)
 		{
 			var st = j.stream;
@@ -531,6 +710,7 @@ namespace VertexPainter
 			c = Color.HSVToRGB(h, s, b);
 			st.uv3[idx] = new Vector4(c.r, c.g, c.b, vec.w);
 		}
+
 		static void UV3_AsColorRGBAOverlay(PaintJob j, int idx, ref object v, float r)
 		{
 			var st = j.stream;
@@ -584,6 +764,7 @@ namespace VertexPainter
 				}
 				return null;
 			}
+
 			switch (brushMode)
 			{
 				case BrushTarget.Color:
@@ -726,8 +907,6 @@ namespace VertexPainter
 			return null;
 		}
 
-		// only really used for AO, seems like a bit overkill, but it makes things easier..
-		public delegate void Multiplier(VertexInstanceStream s, int idx, ref object x);
 		public Multiplier GetMultiplier()
 		{
 			if (tab == Tab.Flow)
@@ -1052,125 +1231,6 @@ namespace VertexPainter
 			}
 		}
 
-
-		public enum FlowTarget
-		{
-			ColorRG = 0,
-			ColorBA,
-			UV0_XY,
-			UV0_ZW,
-			UV1_XY,
-			UV1_ZW,
-			UV2_XY,
-			UV2_ZW,
-			UV3_XY,
-			UV3_ZW
-		}
-
-		public enum FlowBrushType
-		{
-			Direction = 0,
-			Soften
-		}
-
-		public enum FlowVisualization
-		{
-			Arrows = 0,
-			Water,
-		}
-
-		public enum BrushTarget
-		{
-			Color = 0,
-			ValueR,
-			ValueG,
-			ValueB,
-			ValueA,
-			UV0_X,
-			UV0_Y,
-			UV0_Z,
-			UV0_W,
-			UV1_X,
-			UV1_Y,
-			UV1_Z,
-			UV1_W,
-			UV2_X,
-			UV2_Y,
-			UV2_Z,
-			UV2_W,
-			UV3_X,
-			UV3_Y,
-			UV3_Z,
-			UV3_W,
-			UV0_AsColor,
-			UV1_AsColor,
-			UV2_AsColor,
-			UV3_AsColor
-		}
-
-		public enum BrushColorMode
-		{
-			Normal,
-			Overlay,
-			Lighten,
-			Darken,
-			Saturate,
-			Desaturate
-		}
-
-		public enum VertexMode
-		{
-			Adjust,
-			Smear,
-			Smooth,
-			HistoryEraser,
-		}
-
-		public enum VertexContraint
-		{
-			Camera,
-			Normal,
-			X,
-			Y,
-			Z,
-		}
-
-		public bool enabled;
-		public Vector3 oldpos = Vector3.zero;
-		public float brushSize = 1;
-		public float brushFlow = 8;
-		public float brushFalloff = 1; // linear
-		public Color brushColor = Color.red;
-		public int brushValue = 255;
-		public float floatBrushValue = 1.0f;
-		public Vector2 uvVisualizationRange = new Vector2(0, 1);
-		public BrushTarget brushMode = BrushTarget.Color;
-		public BrushColorMode brushColorMode = BrushColorMode.Normal;
-		public VertexMode vertexMode = VertexMode.Adjust;
-		public FlowTarget flowTarget = FlowTarget.ColorRG;
-		public FlowBrushType flowBrushType = FlowBrushType.Direction;
-		public FlowVisualization flowVisualization = FlowVisualization.Water;
-		public bool flowRemap01 = true;
-		public bool pull = false;
-		public VertexContraint vertexContraint = VertexContraint.Normal;
-		public bool showVertexShader = false;
-		public bool showVertexPoints = false;
-		public float showVertexSize = 1;
-		public Color showVertexColor = Color.white;
-		public bool showNormals = false;
-		public bool showTangents = false;
-
-		public VertexPainterCustomBrush customBrush;
-
-		public enum BrushVisualization
-		{
-			Sphere,
-			Disk
-		}
-		public BrushVisualization brushVisualization = BrushVisualization.Sphere;
-		public PaintJob[] jobs = new PaintJob[0];
-		public bool[] jobEdits = new bool[0];
-
 		public void RevertMat()
 		{
 			for (int i = 0; i < jobs.Length; ++i)
@@ -1201,7 +1261,7 @@ namespace VertexPainter
 			}
 		}
 
-		void InitMeshes()
+		private void InitMeshes()
 		{
 			RevertMat();
 			List<PaintJob> pjs = new List<PaintJob>();
@@ -1225,12 +1285,12 @@ namespace VertexPainter
 			UpdateDisplayMode();
 		}
 
-		void SetWireframeDisplay(Renderer r, bool hidden)
+		private void SetWireframeDisplay(Renderer r, bool hidden)
 		{
 			EditorUtility.SetSelectedRenderState(r, hidden ? EditorSelectedRenderState.Hidden : EditorSelectedRenderState.Wireframe);
 		}
 
-		void UpdateDisplayMode(bool endPainting = true)
+		private void UpdateDisplayMode(bool endPainting = true)
 		{
 			if (painting && endPainting)
 			{
@@ -1306,7 +1366,7 @@ namespace VertexPainter
 			}
 		}
 
-		void OnUndo()
+		private void OnUndo()
 		{
 			for (int i = 0; i < jobs.Length; ++i)
 			{
@@ -1334,7 +1394,7 @@ namespace VertexPainter
 			}
 		}
 
-		void RandomMesh(PaintJob job)
+		private void RandomMesh(PaintJob job)
 		{
 			Color oldColor = brushColor;
 			int oldVal = brushValue;
@@ -1647,9 +1707,8 @@ namespace VertexPainter
 			}
 			UpdateDisplayMode(false);
 		}
-
-
-		void DrawVertexPoints(PaintJob j, Vector3 point)
+		
+		private void DrawVertexPoints(PaintJob j, Vector3 point)
 		{
 			if (j.HasStream() && j.HasData())
 			{
@@ -1701,9 +1760,8 @@ namespace VertexPainter
 				}
 			}
 		}
-
-
-		void PaintMesh(PaintJob j, Vector3 point, Lerper lerper, object value)
+		
+		private void PaintMesh(PaintJob j, Vector3 point, Lerper lerper, object value)
 		{
 			bool affected = false;
 			PrepBrushMode(j);
@@ -1842,7 +1900,7 @@ namespace VertexPainter
 			}
 		}
 
-		void EndStroke()
+		private void EndStroke()
 		{
 			if (OnEndStroke != null)
 			{
@@ -1889,7 +1947,7 @@ namespace VertexPainter
 			}
 		}
 
-		void CalculateMeshTangents(Mesh mesh)
+		private void CalculateMeshTangents(Mesh mesh)
 		{
 			//speed up math by copying the mesh arrays
 			int[] triangles = mesh.triangles;
@@ -1966,7 +2024,7 @@ namespace VertexPainter
 			mesh.tangents = tangents;
 		}
 
-		void ConstrainAxis(ref Vector3 cur, Vector3 orig)
+		private void ConstrainAxis(ref Vector3 cur, Vector3 orig)
 		{
 			if (vertexContraint == VertexContraint.X)
 			{
@@ -1985,7 +2043,7 @@ namespace VertexPainter
 			}
 		}
 
-		void PaintVertPosition(PaintJob j, int i, float strength)
+		private void PaintVertPosition(PaintJob j, int i, float strength)
 		{
 			switch (vertexMode)
 			{
@@ -2075,13 +2133,7 @@ namespace VertexPainter
 			}
 		}
 
-		double deltaTime = 0;
-		double lastTime = 0;
-		bool painting = false;
-		Vector3 oldMousePosition;
-		Vector3 strokeDir = Vector3.zero;
-
-		void DoShortcuts()
+		private void DoShortcuts()
 		{
 			// wish I could make this global! but can't find a way...
 			if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape)
@@ -2132,7 +2184,7 @@ namespace VertexPainter
 			}
 		}
 
-		void OnSceneGUI(SceneView sceneView)
+		private void OnSceneGUI(SceneView sceneView)
 		{
 			DoShortcuts();
 

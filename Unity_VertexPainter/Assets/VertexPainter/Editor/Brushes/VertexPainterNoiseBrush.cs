@@ -14,22 +14,16 @@ namespace VertexPainter
 			public float frequency = 10;
 			public float amplitude = 1;
 		}
+
 		public BrushData brushData = new BrushData();
 
-		public override Channels GetChannels()
-		{
-			return Channels.Colors;
-		}
+		public override Channels GetChannels() => Channels.Colors;
 
-		public override Color GetPreviewColor()
-		{
-			return Color.yellow;
-		}
+		public override Color GetPreviewColor() => Color.yellow;
 
-		public override object GetBrushObject()
-		{
-			return brushData;
-		}
+		public override object GetBrushObject() => brushData;
+
+		public override VertexPainterWindow.Lerper GetLerper() => LerpFunc;
 
 		public override void DrawGUI()
 		{
@@ -37,7 +31,7 @@ namespace VertexPainter
 			brushData.amplitude = EditorGUILayout.Slider("amplitude", brushData.amplitude, 0.1f, 10.0f);
 		}
 
-		void LerpFunc(PaintJob j, int idx, ref object val, float r)
+		private void LerpFunc(PaintJob j, int idx, ref object val, float r)
 		{
 			BrushData bd = val as BrushData;
 			var s = j.stream;
@@ -59,10 +53,7 @@ namespace VertexPainter
 			s.colors[idx] = c;
 		}
 
-		public override VertexPainterWindow.Lerper GetLerper()
-		{
-			return LerpFunc;
-		}
+		
 
 	}
 }

@@ -8,15 +8,9 @@ namespace VertexPainter
 	[System.Serializable]
 	public class SaveMeshes : IVertexPainterUtility
 	{
-		public string GetName()
-		{
-			return "Save Meshes";
-		}
+		public string GetName() => "Save Meshes";
 
-		public bool GetEnable()
-		{
-			return true;
-		}
+		public bool GetEnable() => true;
 
 		public void OnGUI(PaintJob[] jobs)
 		{

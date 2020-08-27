@@ -7,15 +7,30 @@ namespace VertexPainter
 {
 	public class BakePivot : IVertexPainterUtility
 	{
-		public string GetName()
+		enum PivotTarget
 		{
-			return "Bake Pivot/Rotation";
+			UV0,
+			UV1,
+			UV2,
+			UV3
 		}
 
-		public bool GetEnable()
+		public enum BakeChannel
 		{
-			return false;
+			None,
+			Color,
+			UV0,
+			UV1,
+			UV2,
+			UV3
 		}
+
+		private PivotTarget pivotTarget = PivotTarget.UV2;
+		private bool bakePivotUseLocal = true;
+
+		public string GetName() => "Bake Pivot/Rotation";
+
+		public bool GetEnable() => false;
 
 		public void OnGUI(PaintJob[] jobs)
 		{
@@ -37,29 +52,7 @@ namespace VertexPainter
 			EditorGUILayout.EndHorizontal();
 		}
 
-
-		enum PivotTarget
-		{
-			UV0,
-			UV1,
-			UV2,
-			UV3
-		}
-		public enum BakeChannel
-		{
-			None,
-			Color,
-			UV0,
-			UV1,
-			UV2,
-			UV3
-		}
-
-		PivotTarget pivotTarget = PivotTarget.UV2;
-		bool bakePivotUseLocal = true;
-
-
-		void InitBakeChannel(BakeChannel bc, PaintJob[] jobs)
+		private void InitBakeChannel(BakeChannel bc, PaintJob[] jobs)
 		{
 			foreach (PaintJob job in jobs)
 			{
@@ -103,7 +96,7 @@ namespace VertexPainter
 			}
 		}
 
-		void DoBakeRotation(PaintJob[] jobs)
+		private void DoBakeRotation(PaintJob[] jobs)
 		{
 			switch (pivotTarget)
 			{
@@ -159,7 +152,7 @@ namespace VertexPainter
 
 		}
 
-		void DoBakePivot(PaintJob[] jobs)
+		private void DoBakePivot(PaintJob[] jobs)
 		{
 			switch (pivotTarget)
 			{

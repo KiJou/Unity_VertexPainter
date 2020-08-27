@@ -10,7 +10,11 @@ namespace VertexPainter
 {
 	public partial class VertexPainterWindow : EditorWindow
 	{
-		enum Tab
+		static Dictionary<string, bool> rolloutStates = new Dictionary<string, bool>();
+		static GUIStyle rolloutStyle;
+
+
+		public enum Tab
 		{
 			Paint = 0,
 			Deform,
@@ -19,8 +23,7 @@ namespace VertexPainter
 			Custom
 		}
 
-		private static string[] TAB_NAMES =
-		{
+		private static string[] TAB_NAMES = {
 			"PAINT",
 			"DEFORM",
 			"FLOW",
@@ -31,16 +34,14 @@ namespace VertexPainter
 		static string sSwatchKey = "VertexPainter_Swatches";
 		ColorSwatches swatches = null;
 
-		//#if __MEGASPLAT__
-		//        Tab tab = Tab.Custom;
-		//#else
-		//        Tab tab = Tab.Paint;
-		//#endif
-		Tab tab = Tab.Paint;
+		private Tab tab = Tab.Paint;
 
-		bool hideMeshWireframe = false;
+		private bool hideMeshWireframe = false;
+		private Vector2 scroll = default;
 
-		bool DrawClearButton(string label)
+		private List<IVertexPainterUtility> utilities = new List<IVertexPainterUtility>();
+
+		public bool DrawClearButton(string label)
 		{
 			if (GUILayout.Button(label, GUILayout.Width(46)))
 			{
@@ -49,8 +50,6 @@ namespace VertexPainter
 			return false;
 		}
 
-		static Dictionary<string, bool> rolloutStates = new Dictionary<string, bool>();
-		static GUIStyle rolloutStyle;
 		public static bool DrawRollup(string text, bool defaultState = true, bool inset = false)
 		{
 			if (rolloutStyle == null)
@@ -81,68 +80,7 @@ namespace VertexPainter
 			return rolloutStates[text];
 		}
 
-		Vector2 scroll;
-		void OnGUI()
-		{
-
-			if (Selection.activeGameObject == null)
-			{
-				EditorGUILayout.LabelField("No objects selected. Please select an object with a MeshFilter and Renderer");
-				return;
-			}
-
-			if (swatches == null)
-			{
-				swatches = ColorSwatches.CreateInstance<ColorSwatches>();
-				if (EditorPrefs.HasKey(sSwatchKey))
-				{
-					JsonUtility.FromJsonOverwrite(EditorPrefs.GetString(sSwatchKey), swatches);
-				}
-				if (swatches == null)
-				{
-					swatches = ColorSwatches.CreateInstance<ColorSwatches>();
-					EditorPrefs.SetString(sSwatchKey, JsonUtility.ToJson(swatches, false));
-				}
-			}
-
-			DrawChannelGUI();
-
-			var ot = tab;
-			tab = (Tab)GUILayout.Toolbar((int)tab, TAB_NAMES);
-			if (ot != tab)
-			{
-				UpdateDisplayMode();
-			}
-
-			if (tab == Tab.Paint)
-			{
-				scroll = EditorGUILayout.BeginScrollView(scroll);
-				DrawPaintGUI();
-			}
-			else if (tab == Tab.Deform)
-			{
-				scroll = EditorGUILayout.BeginScrollView(scroll);
-				DrawDeformGUI();
-			}
-			else if (tab == Tab.Flow)
-			{
-				scroll = EditorGUILayout.BeginScrollView(scroll);
-				DrawFlowGUI();
-			}
-			else if (tab == Tab.Utility)
-			{
-				scroll = EditorGUILayout.BeginScrollView(scroll);
-				DrawUtilityGUI();
-			}
-			else if (tab == Tab.Custom)
-			{
-				DrawCustomGUI();
-			}
-			EditorGUILayout.EndScrollView();
-		}
-
-
-		void DrawChannelGUI()
+		private void DrawChannelGUI()
 		{
 			EditorGUILayout.Separator();
 			GUI.skin.box.normal.textColor = Color.white;
@@ -357,7 +295,7 @@ namespace VertexPainter
 
 		}
 
-		void DrawBrushSettingsGUI()
+		private void DrawBrushSettingsGUI()
 		{
 			brushSize = EditorGUILayout.Slider("Brush Size", brushSize, 0.01f, 30.0f);
 			brushFlow = EditorGUILayout.Slider("Brush Flow", brushFlow, 0.1f, 128.0f);
@@ -373,8 +311,7 @@ namespace VertexPainter
 
 		}
 
-
-		void DrawCustomGUI()
+		private void DrawCustomGUI()
 		{
 			//if (DrawRollup("Brush Settings"))
 			//{
@@ -410,7 +347,7 @@ namespace VertexPainter
 			//}
 		}
 
-		void DrawPaintGUI()
+		private void DrawPaintGUI()
 		{
 
 			GUILayout.Box("Brush Settings", new GUILayoutOption[] { GUILayout.ExpandWidth(true), GUILayout.Height(20) });
@@ -510,7 +447,7 @@ namespace VertexPainter
 
 		}
 
-		void DrawDeformGUI()
+		private void DrawDeformGUI()
 		{
 			GUILayout.Box("Brush Settings", new GUILayoutOption[] { GUILayout.ExpandWidth(true), GUILayout.Height(20) });
 			pull = (Event.current.shift);
@@ -524,7 +461,7 @@ namespace VertexPainter
 
 		}
 
-		void DrawFlowGUI()
+		private void DrawFlowGUI()
 		{
 			GUILayout.Box("Brush Settings", new GUILayoutOption[] { GUILayout.ExpandWidth(true), GUILayout.Height(20) });
 			var oldV = flowVisualization;
@@ -584,8 +521,7 @@ namespace VertexPainter
 
 		}
 
-		List<IVertexPainterUtility> utilities = new List<IVertexPainterUtility>();
-		void InitPluginUtilities()
+		private void InitPluginUtilities()
 		{
 			if (utilities == null || utilities.Count == 0)
 			{
@@ -607,7 +543,7 @@ namespace VertexPainter
 			}
 		}
 
-		void DrawUtilityGUI()
+		private void DrawUtilityGUI()
 		{
 			InitPluginUtilities();
 			for (int i = 0; i < utilities.Count; ++i)
@@ -621,8 +557,66 @@ namespace VertexPainter
 			}
 		}
 
+		public void OnGUI()
+		{
 
-		void OnFocus()
+			if (Selection.activeGameObject == null)
+			{
+				EditorGUILayout.LabelField("No objects selected. Please select an object with a MeshFilter and Renderer");
+				return;
+			}
+
+			if (swatches == null)
+			{
+				swatches = ColorSwatches.CreateInstance<ColorSwatches>();
+				if (EditorPrefs.HasKey(sSwatchKey))
+				{
+					JsonUtility.FromJsonOverwrite(EditorPrefs.GetString(sSwatchKey), swatches);
+				}
+				if (swatches == null)
+				{
+					swatches = ColorSwatches.CreateInstance<ColorSwatches>();
+					EditorPrefs.SetString(sSwatchKey, JsonUtility.ToJson(swatches, false));
+				}
+			}
+
+			DrawChannelGUI();
+
+			var ot = tab;
+			tab = (Tab)GUILayout.Toolbar((int)tab, TAB_NAMES);
+			if (ot != tab)
+			{
+				UpdateDisplayMode();
+			}
+
+			if (tab == Tab.Paint)
+			{
+				scroll = EditorGUILayout.BeginScrollView(scroll);
+				DrawPaintGUI();
+			}
+			else if (tab == Tab.Deform)
+			{
+				scroll = EditorGUILayout.BeginScrollView(scroll);
+				DrawDeformGUI();
+			}
+			else if (tab == Tab.Flow)
+			{
+				scroll = EditorGUILayout.BeginScrollView(scroll);
+				DrawFlowGUI();
+			}
+			else if (tab == Tab.Utility)
+			{
+				scroll = EditorGUILayout.BeginScrollView(scroll);
+				DrawUtilityGUI();
+			}
+			else if (tab == Tab.Custom)
+			{
+				DrawCustomGUI();
+			}
+			EditorGUILayout.EndScrollView();
+		}
+
+		public void OnFocus()
 		{
 			if (painting)
 			{
@@ -638,18 +632,18 @@ namespace VertexPainter
 			Repaint();
 		}
 
-		void OnInspectorUpdate()
+		public void OnInspectorUpdate()
 		{
 			Repaint();
 		}
 
-		void OnSelectionChange()
+		public void OnSelectionChange()
 		{
 			InitMeshes();
 			this.Repaint();
 		}
 
-		void OnDestroy()
+		public void OnDestroy()
 		{
 			bool show = showVertexShader;
 			showVertexShader = false;

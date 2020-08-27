@@ -12,6 +12,7 @@ namespace VertexPainter
 	{
 		public static Type type_HandleUtility;
 		protected static MethodInfo meth_IntersectRayMesh;
+		static object[] parameters = new object[4];
 
 		static RXLookingGlass()
 		{
@@ -21,11 +22,8 @@ namespace VertexPainter
 			meth_IntersectRayMesh = type_HandleUtility.GetMethod("IntersectRayMesh", (BindingFlags.Static | BindingFlags.NonPublic));
 		}
 
-		public static bool IntersectRayMesh(Ray ray, MeshFilter meshFilter, out RaycastHit hit)
-		{
-			return IntersectRayMesh(ray, meshFilter.sharedMesh, meshFilter.transform.localToWorldMatrix, out hit);
-		}
-		static object[] parameters = new object[4];
+		public static bool IntersectRayMesh(Ray ray, MeshFilter meshFilter, out RaycastHit hit) => IntersectRayMesh(ray, meshFilter.sharedMesh, meshFilter.transform.localToWorldMatrix, out hit);
+
 		public static bool IntersectRayMesh(Ray ray, Mesh mesh, Matrix4x4 matrix, out RaycastHit hit)
 		{
 			parameters[0] = ray;

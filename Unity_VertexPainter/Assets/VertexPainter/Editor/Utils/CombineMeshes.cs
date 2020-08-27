@@ -8,15 +8,10 @@ namespace VertexPainter
 	[System.Serializable]
 	public class CombineMeshes : IVertexPainterUtility
 	{
-		public string GetName()
-		{
-			return "Combine Meshes";
-		}
+		public string GetName() => "Combine Meshes";
 
-		public bool GetEnable()
-		{
-			return true;
-		}
+		public bool GetEnable() => true;
+
 
 		public void OnGUI(PaintJob[] jobs)
 		{

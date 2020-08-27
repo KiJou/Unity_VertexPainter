@@ -44,10 +44,25 @@ namespace VertexPainter
 		{
 			var copy = GameObject.Instantiate(mesh);
 			copy.colors = stream.colors;
-			if (stream.uv0 != null && stream.uv0.Count > 0) { copy.SetUVs(0, stream.uv0); }
-			if (stream.uv1 != null && stream.uv1.Count > 0) { copy.SetUVs(1, stream.uv1); }
-			if (stream.uv2 != null && stream.uv2.Count > 0) { copy.SetUVs(2, stream.uv2); }
-			if (stream.uv3 != null && stream.uv3.Count > 0) { copy.SetUVs(3, stream.uv3); }
+			if (stream.uv0 != null && stream.uv0.Count > 0)
+			{
+				copy.SetUVs(0, stream.uv0);
+			}
+
+			if (stream.uv1 != null && stream.uv1.Count > 0)
+			{
+				copy.SetUVs(1, stream.uv1);
+			}
+
+			if (stream.uv2 != null && stream.uv2.Count > 0)
+			{
+				copy.SetUVs(2, stream.uv2);
+			}
+
+			if (stream.uv3 != null && stream.uv3.Count > 0)
+			{
+				copy.SetUVs(3, stream.uv3);
+			}
 
 			if (stream.positions != null && stream.positions.Length == copy.vertexCount)
 			{
