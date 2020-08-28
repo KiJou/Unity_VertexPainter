@@ -3,6 +3,8 @@ Shader "VertexPainter/SplatBlendSpecular_2Layer"
 {
 	Properties
 	{
+		[Enum(OFF,0,FRONT,1,BACK,2)] _CullMode("Cull Mode", int) = 2
+		// 1Layer
 		_Tex1("Albedo + Height", 2D) = "white" {}
 		_Tint1("Tint", Color) = (1, 1, 1, 1)
 		[NoScaleOffset][Normal]_Normal1("Normal", 2D) = "bump" {}
@@ -13,7 +15,7 @@ Shader "VertexPainter/SplatBlendSpecular_2Layer"
 		_EmissiveMult1("Emissive Multiplier", Float) = 1
 		_Parallax1("Parallax Height", Range(0.005, 0.08)) = 0.02
 		_TexScale1("Texture Scale", Float) = 1
-
+		// 2Layer
 		_Tex2("Albedo + Height", 2D) = "white" {}
 		_Tint2("Tint", Color) = (1, 1, 1, 1)
 		[NoScaleOffset][Normal]_Normal2("Normal", 2D) = "bump" {}
@@ -30,7 +32,6 @@ Shader "VertexPainter/SplatBlendSpecular_2Layer"
 		_FlowIntensity("Flow Intensity", Float) = 1
 		_FlowAlpha("Flow Alpha", Range(0, 1)) = 1
 		_FlowRefraction("Flow Refraction", Range(0, 0.3)) = 0.04
-
 		_DistBlendMin("Distance Blend Begin", Float) = 0
 		_DistBlendMax("Distance Blend Max", Float) = 100
 		_DistUVScale1("Distance UV Scale", Float) = 0.5
@@ -40,100 +41,85 @@ Shader "VertexPainter/SplatBlendSpecular_2Layer"
 	SubShader
 	{
 		Tags { "RenderType" = "Opaque" "PerformanceChecks" = "False" }
-		LOD 100
 
-		CGPROGRAM
-
-		#pragma surface surf Standard vertex:vert fullforwardshadows
-		#pragma shader_feature __ _PARALLAXMAP
-		#pragma shader_feature __ _NORMALMAP
-		#pragma shader_feature __ _SPECGLOSSMAP
-		#pragma shader_feature __ _EMISSION
-		#pragma shader_feature __ _FLOW1 _FLOW2 
-		#pragma shader_feature __ _FLOWDRIFT 
-		#pragma shader_feature __ _FLOWREFRACTION
-		#pragma shader_feature __ _DISTBLEND
-		#pragma target 3.0
-		#include "SplatBlend_Shared.cginc"
-
-		void vert(inout appdata_full v, out Input o)
+		Pass
 		{
-			SharedVert(v,o);
+			Name "FORWARD"
+			Tags { "LightMode" = "ForwardBase" }
+			Cull[_CullMode]
+			CGPROGRAM
+			#pragma target 3.0
+			#pragma multi_compile_fog
+			#pragma multi_compile_fwdbase
+			#pragma shader_feature _ _PARALLAXMAP
+			#pragma shader_feature _ _NORMALMAP
+			#pragma shader_feature _ _SPECGLOSSMAP
+			#pragma shader_feature _ _EMISSION
+			#pragma shader_feature _ _FLOW1 _FLOW2 
+			#pragma shader_feature _ _FLOWDRIFT 
+			#pragma shader_feature _ _FLOWREFRACTION
+			#pragma shader_feature _ _DISTBLEND
+			#pragma multi_compile _LAYERTWO
+			#pragma vertex VSMain
+			#pragma fragment PSMain
+			#include "UnityCG.cginc"
+			#include "SplatBlend_Shared.cginc"
+			ENDCG
 		}
 
-		void surf(Input IN, inout SurfaceOutputStandard o)
+		Pass
 		{
-			COMPUTEDISTBLEND
+			Name "FORWARD_DELTA"
+			Tags { "LightMode" = "ForwardAdd" }
+			ZWrite Off
+			Blend One One
+			Fog { Color(0,0,0,0) }
+			ZTest LEqual
 
-			float2 uv1 = IN.uv_Tex1 * _TexScale1;
-			float2 uv2 = IN.uv_Tex1 * _TexScale2;
-			INIT_FLOW
-#if _FLOWDRIFT || !_PARALLAXMAP 
-			fixed4 c1 = FETCH_TEX1(_Tex1, uv1);
-			fixed4 c2 = FETCH_TEX2(_Tex2, uv2);
-#elif _DISTBLEND
-			fixed4 c1 = lerp(tex2D(_Tex1, uv1), tex2D(_Tex1, uv1*_DistUVScale1), dist);
-			fixed4 c2 = lerp(tex2D(_Tex2, uv2), tex2D(_Tex2, uv2*_DistUVScale2), dist);
-#else
-			fixed4 c1 = tex2D(_Tex1, uv1);
-			fixed4 c2 = tex2D(_Tex2, uv2);
-#endif
-
-			half b1 = HeightBlend(c1.a, c2.a, IN.color.r, _Contrast2);
-#if _FLOW2
-			b1 *= _FlowAlpha;
-	#if _FLOWREFRACTION && _NORMALMAP
-			half4 rn = FETCH_TEX2(_Normal2, uv2) - 0.5;
-			uv1 += rn.xy * b1 * _FlowRefraction;
-		#if !_PARALLAXMAP 
-			c1 = FETCH_TEX1(_Tex1, uv1);
-		#endif
-	#endif
-#endif
-
-#if _PARALLAXMAP
-			float parallax = lerp(_Parallax1, _Parallax2, b1);
-			float2 offset = ParallaxOffset(lerp(c1.a, c2.a, b1), parallax, IN.worldPos);
-			uv1 += offset;
-			uv2 += offset;
-			c1 = FETCH_TEX1(_Tex1, uv1);
-			c2 = FETCH_TEX2(_Tex2, uv2);
-	#if (_FLOW1 || _FLOW2 || _FLOW3)
-			fuv1 += offset;
-			fuv2 += offset;
-	#endif
-#endif
-
-			fixed4 c = lerp(c1 * _Tint1, c2 * _Tint2, b1);
-
-#if _SPECGLOSSMAP
-			fixed4 g1 = FETCH_TEX1(_SpecGlossMap1, uv1);
-			fixed4 g2 = FETCH_TEX2(_SpecGlossMap2, uv2);
-			fixed4 gf = lerp(g1, g2, b1);
-			o.Smoothness = gf.a;
-			o.Metallic = gf.rgb;
-#else
-			o.Smoothness = lerp(_Glossiness1, _Glossiness2, b1);
-			o.Metallic = lerp(_SpecColor1, _SpecColor2, b1).rgb;
-#endif
-
-#if _EMISSION
-			fixed4 e1 = FETCH_TEX1(_Emissive1, uv1);
-			fixed4 e2 = FETCH_TEX2(_Emissive2, uv2);
-			o.Emission = lerp(e1.rgb * _EmissiveMult1, e2.rgb * _EmissiveMult2, b1);
-#endif
-
-#if _NORMALMAP
-			half4 n1 = FETCH_TEX1(_Normal1, uv1);
-			half4 n2 = FETCH_TEX2(_Normal2, uv2);
-			o.Normal = UnpackNormal(lerp(n1, n2, b1));
-#endif
-			o.Albedo = c.rgb;
-
+			CGPROGRAM
+			#pragma vertex vertAdd
+			#pragma fragment fragAdd
+			#pragma target 3.0
+			#pragma multi_compile_fwdadd
+			#pragma multi_compile_fwdadd_fullshadows
+			#pragma multi_compile_fog
+			#include "UnityStandardCoreForward.cginc"
+			ENDCG
 		}
-		ENDCG
+
+		Pass
+		{
+			Name "SHADOW_CASTER"
+			Tags { "LightMode" = "ShadowCaster" }
+			ZWrite On ZTest LEqual
+			CGPROGRAM
+			#pragma target 3.0
+			#pragma shader_feature_local _ _ALPHATEST_ON _ALPHABLEND_ON _ALPHAPREMULTIPLY_ON
+			#pragma multi_compile_shadowcaster
+			#pragma multi_compile_instancing
+			#pragma vertex vertShadowCaster
+			#pragma fragment fragShadowCaster
+			#include "UnityStandardShadow.cginc"
+			ENDCG
+		}
+
+		Pass
+		{
+			Name "META"
+			Tags { "LightMode" = "Meta" }
+			Cull Off
+			CGPROGRAM
+			#pragma vertex vert_meta
+			#pragma fragment frag_meta
+			#pragma shader_feature _EMISSION
+			#pragma shader_feature_local _METALLICGLOSSMAP
+			#pragma shader_feature_local _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+			#pragma shader_feature_local _DETAIL_MULX2
+			#pragma shader_feature EDITOR_VISUALIZATION
+			#include "UnityStandardMeta.cginc"
+			ENDCG
+		}
 	}
-
 	CustomEditor "VertexPainter.CustomShaderGUI"
-	FallBack "Diffuse"
+	FallBack Off
 }

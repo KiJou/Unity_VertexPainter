@@ -8,6 +8,13 @@ namespace VertexPainter
 {
 	public class CustomShaderGUI : ShaderGUI
 	{
+		public enum CullingMode
+		{
+			CullingOff,
+			FrontCulling,
+			BackCulling
+		}
+
 		public enum FlowChannel
 		{
 			None = 0,
@@ -23,6 +30,8 @@ namespace VertexPainter
 			"Two",
 			"Three",
 		};
+
+		private CullingMode cullingMode;
 
 		private void DrawLayer(MaterialEditor editor, int i, MaterialProperty[] props, string[] keyWords, bool hasGloss, bool hasSpec, bool isParallax, bool hasEmis, bool hasDistBlend)
 		{
@@ -122,9 +131,12 @@ namespace VertexPainter
 					layerCount = 3;
 				}
 
-				targetMat.shader = Shader.Find("G2Studios/VertexPainter/SplatBlendSpecular_" + layerCount + "Layer");
+				targetMat.shader = Shader.Find("VertexPainter/SplatBlendSpecular_" + layerCount + "Layer");
 				return;
 			}
+
+			EditorGUILayout.Space();
+			GUI_SetCullingMode(targetMat);
 
 			parallax = EditorGUILayout.Toggle("Parallax Offset", parallax);
 			hasDistBlend = EditorGUILayout.Toggle("UV Scale in distance", hasDistBlend);
@@ -158,7 +170,6 @@ namespace VertexPainter
 			fchannel = (FlowChannel)EditorGUILayout.Popup((int)fchannel, CHANNEL_NAMES);
 			if (fchannel != FlowChannel.None)
 			{
-
 				var flowSpeed = FindProperty("_FlowSpeed", props);
 				var flowIntensity = FindProperty("_FlowIntensity", props);
 				var flowAlpha = FindProperty("_FlowAlpha", props);
@@ -218,6 +229,36 @@ namespace VertexPainter
 				}
 				targetMat.shaderKeywords = newKeywords.ToArray();
 				EditorUtility.SetDirty(targetMat);
+			}
+		}
+
+		private void GUI_SetCullingMode(Material material)
+		{
+			int cullMode = material.GetInt("_CullMode");
+			if ((int)CullingMode.CullingOff == cullMode)
+			{
+				cullingMode = CullingMode.CullingOff;
+			}
+			else if ((int)CullingMode.FrontCulling == cullMode)
+			{
+				cullingMode = CullingMode.FrontCulling;
+			}
+			else
+			{
+				cullingMode = CullingMode.BackCulling;
+			}
+			cullingMode = (CullingMode)EditorGUILayout.EnumPopup("Culling Mode", cullingMode);
+			if (cullingMode == CullingMode.CullingOff)
+			{
+				material.SetInt("_CullMode", 0);
+			}
+			else if (cullingMode == CullingMode.FrontCulling)
+			{
+				material.SetInt("_CullMode", 1);
+			}
+			else
+			{
+				material.SetInt("_CullMode", 2);
 			}
 		}
 

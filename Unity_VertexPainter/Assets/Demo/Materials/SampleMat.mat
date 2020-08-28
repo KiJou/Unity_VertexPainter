@@ -8,8 +8,8 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: SampleMat
-  m_Shader: {fileID: 4800000, guid: f2e083187dbe242faad27d9fa2121a46, type: 3}
-  m_ShaderKeywords: _LAYERS1 _NORMALMAP
+  m_Shader: {fileID: 4800000, guid: 9c09b2e33c3e9400f9072c70a607fa98, type: 3}
+  m_ShaderKeywords: _DISTBLEND _FLOW2 _LAYERS2 _NORMALMAP
   m_LightmapFlags: 5
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -129,29 +129,30 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _BumpScale: 1
-    - _Contrast2: 0.536
+    - _Contrast2: 0.793
     - _Contrast3: 0.5
     - _Contrast4: 0.5
+    - _CullMode: 2
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
-    - _DistBlendMax: 17.4
-    - _DistBlendMin: 1.11
+    - _DistBlendMax: 18.37
+    - _DistBlendMin: 0.68
     - _DistBlendScale: 20
     - _DistUVScale1: 0
-    - _DistUVScale2: 1.22
+    - _DistUVScale2: 0.85
     - _DistUVScale3: 0.5
     - _DistUVScale4: 0.5
     - _DstBlend: 0
     - _EmissiveMult1: 3.94
-    - _EmissiveMult2: 1.51
+    - _EmissiveMult2: 0.31
     - _EmissiveMult3: 1
     - _EmissiveMult4: 1
-    - _FlowAlpha: 0.663
+    - _FlowAlpha: 0.786
     - _FlowIntensity: 0
-    - _FlowRefraction: 0.149
-    - _FlowSpeed: 0
+    - _FlowRefraction: 0.128
+    - _FlowSpeed: 0.88
     - _Glossiness: 0.5
-    - _Glossiness1: 0.17
+    - _Glossiness1: 0
     - _Glossiness2: 0
     - _Glossiness3: 0.5
     - _Glossiness4: 0.5
@@ -167,7 +168,7 @@ Material:
     - _Parallax4: 0.02
     - _SrcBlend: 1
     - _TexScale1: 1.48
-    - _TexScale2: 1.63
+    - _TexScale2: 2.32
     - _TexScale3: 1
     - _TexScale4: 1
     - _UVSec: 0
@@ -175,8 +176,8 @@ Material:
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _SpecColor1: {r: 0.083437175, g: 0.11388704, b: 0.23584908, a: 0.2}
-    - _SpecColor2: {r: 0.8301887, g: 0.30936277, b: 0.30936277, a: 0.2}
+    - _SpecColor1: {r: 0.060742266, g: 0.116013326, b: 0.3301887, a: 0.2}
+    - _SpecColor2: {r: 0.3773585, g: 0.22961909, b: 0.22961909, a: 0.2}
     - _SpecColor3: {r: 0.2, g: 0.2, b: 0.2, a: 0.2}
     - _SpecColor4: {r: 0.2, g: 0.2, b: 0.2, a: 0.2}
     - _Tint1: {r: 1, g: 1, b: 1, a: 1}

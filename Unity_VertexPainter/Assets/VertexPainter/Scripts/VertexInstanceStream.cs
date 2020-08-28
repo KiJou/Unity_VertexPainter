@@ -6,7 +6,7 @@ using System.Collections.Generic;
 namespace VertexPainter
 {
 	[ExecuteInEditMode]
-	public class VertexInstanceStream : MonoBehaviour
+	public sealed class VertexInstanceStream : MonoBehaviour
 	{
 		public bool keepRuntimeData = false;
 
