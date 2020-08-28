@@ -81,15 +81,15 @@ namespace VertexPainter
 			string[] keyWords = targetMat.shaderKeywords;
 
 			int layerCount = (int)FlowChannel.None;
-			if (targetMat.shader.name == "VertexPainter/SplatBlendSpecular_1Layer")
+			if (targetMat.shader.name == "VertexPainter/Surface_1Layer")
 			{
 				layerCount = (int)FlowChannel.One;
 			}
-			else if (targetMat.shader.name == "VertexPainter/SplatBlendSpecular_2Layer")
+			else if (targetMat.shader.name == "VertexPainter/Surface_2Layer")
 			{
 				layerCount = (int)FlowChannel.Two;
 			}
-			else if (targetMat.shader.name == "VertexPainter/SplatBlendSpecular_3Layer")
+			else if (targetMat.shader.name == "VertexPainter/Surface_3Layer")
 			{
 				layerCount = (int)FlowChannel.Three;
 			}
@@ -131,7 +131,7 @@ namespace VertexPainter
 					layerCount = 3;
 				}
 
-				targetMat.shader = Shader.Find("VertexPainter/SplatBlendSpecular_" + layerCount + "Layer");
+				targetMat.shader = Shader.Find("VertexPainter/Surface_" + layerCount + "Layer");
 				return;
 			}
 

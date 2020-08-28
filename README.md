@@ -23,7 +23,7 @@ This tool edits and deforms the vertex color of mesh on Unity.
 ![GUI](Demo/Vertex_Paint_GUI.png)
 
 - Select Mesh
-- Select Shader (VertexPainter/SplatBlendSpecular 1~3)
+- Select Shader (VertexPainter/Surface 1~3 Layer)
 - As You Like VertexPaint or Deform
 ![Paint](Demo/Vertex_Paint.png)
 ![Deform](Demo/Vertex_Deform.png)

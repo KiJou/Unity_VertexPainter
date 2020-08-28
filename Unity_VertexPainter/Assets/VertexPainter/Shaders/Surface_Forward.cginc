@@ -1,5 +1,5 @@
-#ifndef SPLATBLEND_FORWARD_INCLUDED
-#define SPLATBLEND_FORWARD_INCLUDED
+#ifndef SURFACE_FORWARD_INCLUDED
+#define SURFACE_FORWARD_INCLUDED
 
 #include "HLSLSupport.cginc"
 #include "UnityShaderVariables.cginc"
