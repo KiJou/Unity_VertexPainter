@@ -12,7 +12,6 @@ namespace VertexPainter
 
 		public bool GetEnable() => true;
 
-
 		public void OnGUI(PaintJob[] jobs)
 		{
 			EditorGUILayout.BeginHorizontal();
