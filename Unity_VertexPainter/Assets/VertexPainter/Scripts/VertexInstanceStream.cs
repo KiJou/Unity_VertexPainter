@@ -51,12 +51,18 @@ namespace VertexPainter
 
 		[HideInInspector]
 		public Material[] originalMaterial;
-		public static Material vertexShaderMat;
+		public static Material vertexShaderMaterial;
 
 		public Mesh GetModifierMesh => meshStream;
 		private MeshRenderer meshRend = null;
 
 
+		public static Material CreateMaterial()
+		{
+			Material material = new Material(Shader.Find("Hidden/VertexPainter/Preview"));
+			material.hideFlags = HideFlags.HideAndDontSave;
+			return material;
+		}
 #endif
 		bool enforcedColorChannels = false;
 
@@ -230,7 +236,7 @@ namespace VertexPainter
 			}
 
 			if (meshRenderer.sharedMaterials != null &&
-				meshRenderer.sharedMaterial == vertexShaderMat &&
+				meshRenderer.sharedMaterial == vertexShaderMaterial &&
 				originalMaterial != null &&
 				originalMaterial.Length == meshRenderer.sharedMaterials.Length &&
 				originalMaterial.Length > 1)

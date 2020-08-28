@@ -5,6 +5,9 @@ using System.Collections.Generic;
 
 namespace VertexPainter
 {
+	/// <summary>
+	/// GetWindow Class
+	/// </summary>
 	public partial class VertexPainterWindow : EditorWindow
 	{
 		[MenuItem("Custom/Vertex Painter")]

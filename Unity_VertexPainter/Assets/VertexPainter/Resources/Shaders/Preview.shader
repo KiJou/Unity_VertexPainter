@@ -1,5 +1,5 @@
 ﻿
-Shader "Hidden/VertexPainterPro_Preview"
+Shader "Hidden/VertexPainter/Preview"
 {
 
 	SubShader
@@ -23,7 +23,7 @@ Shader "Hidden/VertexPainterPro_Preview"
 				float4 uv3 : TEXCOORD3;
 			};
 
-			struct VSOutput
+			struct PSInput
 			{
 				float4 vertex : SV_POSITION;
 				float4 color : COLOR0;
@@ -31,12 +31,12 @@ Shader "Hidden/VertexPainterPro_Preview"
 				float2 flow : TexCoord1;
 			};
 
-			int  _channel;
 			float2 _uvRange;
+			int  _channel;
 			int _flowVisualization;
 			int _flowTarget;
 			int _tab;
-			float _time; // because _Time won't work in edit mode..
+			float _time; // _Time won't work in edit mode..
 
 			float Range(float f)
 			{
@@ -66,9 +66,20 @@ Shader "Hidden/VertexPainterPro_Preview"
 				return noise;
 			}
 
-			float mod289(float x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-			float4 mod289(float4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-			float4 perm(float4 x) { return mod289(((x * 34.0) + 1.0) * x); }
+			float mod289(float x) 
+			{
+				return x - floor(x * (1.0 / 289.0)) * 289.0; 
+			}
+
+			float4 mod289(float4 x) 
+			{
+				return x - floor(x * (1.0 / 289.0)) * 289.0; 
+			}
+
+			float4 perm(float4 x) 
+			{
+				return mod289(((x * 34.0) + 1.0) * x); 
+			}
 
 			float Noise3d(float3 p)
 			{
@@ -156,9 +167,9 @@ Shader "Hidden/VertexPainterPro_Preview"
 				}
 			}
 
-			VSOutput VSMain(VSInput v)
+			PSInput VSMain(VSInput v)
 			{
-				VSOutput o = (VSOutput)0;
+				PSInput o = (PSInput)0;
 				o.uv = v.uv0.xy;
 				o.vertex = UnityObjectToClipPos(v.vertex);
 				
@@ -309,7 +320,7 @@ Shader "Hidden/VertexPainterPro_Preview"
 				return o;
 			}
 
-			fixed4 PSMain(VSOutput i) : SV_Target
+			fixed4 PSMain(PSInput i) : SV_Target
 			{
 				if (_tab > 1.9 && _tab < 2.1)
 				{

@@ -8,6 +8,9 @@ using System.Linq;
 
 namespace VertexPainter
 {
+	/// <summary>
+	/// MainGUI WindowClass
+	/// </summary>
 	public partial class VertexPainterWindow : EditorWindow
 	{
 		static Dictionary<string, bool> rolloutStates = new Dictionary<string, bool>();
@@ -32,10 +35,9 @@ namespace VertexPainter
         };
 
 		static string sSwatchKey = "VertexPainter_Swatches";
-		ColorSwatches swatches = null;
+		ColorSwatches swatches = default;
 
 		private Tab tab = Tab.Paint;
-
 		private bool hideMeshWireframe = false;
 		private Vector2 scroll = default;
 
@@ -43,7 +45,7 @@ namespace VertexPainter
 
 		public bool DrawClearButton(string label)
 		{
-			if (GUILayout.Button(label, GUILayout.Width(46)))
+			if (GUILayout.Button(label, GUILayout.Width(60)))
 			{
 				return (EditorUtility.DisplayDialog("Confirm", "Clear " + label + " data?", "ok", "cancel"));
 			}
@@ -134,12 +136,12 @@ namespace VertexPainter
 				}
 				{
 					EditorGUILayout.BeginHorizontal();
-					showNormals = GUILayout.Toggle(showNormals, "ShowNormals");
+					showNormals = GUILayout.Toggle(showNormals, "Show Normals");
 					EditorGUILayout.EndHorizontal();
 				}
 				{
 					EditorGUILayout.BeginHorizontal();
-					showTangents = GUILayout.Toggle(showTangents, "ShowTangents");
+					showTangents = GUILayout.Toggle(showTangents, "Show Tangents");
 					EditorGUILayout.EndHorizontal();
 				}
 
@@ -245,7 +247,7 @@ namespace VertexPainter
 						}
 						Undo.CollapseUndoOperations(Undo.GetCurrentGroup());
 					}
-					if (hasPositions && DrawClearButton("Pos"))
+					if (hasPositions && DrawClearButton("Position"))
 					{
 						for (int i = 0; i < jobs.Length; ++i)
 						{
@@ -258,7 +260,7 @@ namespace VertexPainter
 						}
 						Undo.CollapseUndoOperations(Undo.GetCurrentGroup());
 					}
-					if (hasNormals && DrawClearButton("Norm"))
+					if (hasNormals && DrawClearButton("Normal"))
 					{
 						for (int i = 0; i < jobs.Length; ++i)
 						{
@@ -292,11 +294,11 @@ namespace VertexPainter
 			EditorGUILayout.Separator();
 			GUILayout.Box("", new GUILayoutOption[] { GUILayout.ExpandWidth(true), GUILayout.Height(1) });
 			EditorGUILayout.Separator();
-
 		}
 
 		private void DrawBrushSettingsGUI()
 		{
+			EditorGUILayout.Space();
 			brushSize = EditorGUILayout.Slider("Brush Size", brushSize, 0.01f, 30.0f);
 			brushFlow = EditorGUILayout.Slider("Brush Flow", brushFlow, 0.1f, 128.0f);
 			brushFalloff = EditorGUILayout.Slider("Brush Falloff", brushFalloff, 0.1f, 3.5f);
@@ -308,48 +310,16 @@ namespace VertexPainter
 			EditorGUILayout.Separator();
 			GUILayout.Box("", new GUILayoutOption[] { GUILayout.ExpandWidth(true), GUILayout.Height(1) });
 			EditorGUILayout.Separator();
-
+			EditorGUILayout.Space();
 		}
 
 		private void DrawCustomGUI()
 		{
-			//if (DrawRollup("Brush Settings"))
-			//{
-			//    customBrush = EditorGUILayout.ObjectField("Brush", customBrush, typeof(VertexPainterCustomBrush), false) as VertexPainterCustomBrush;
-
-			//    DrawBrushSettingsGUI();
-			//}
 			scroll = EditorGUILayout.BeginScrollView(scroll);
-			//EditorGUILayout.BeginHorizontal();
-			//if (GUILayout.Button("Fill"))
-			//{
-			//    if (OnBeginStroke != null)
-			//    {
-			//        OnBeginStroke(jobs);
-			//    }
-			//    for (int i = 0; i < jobs.Length; ++i)
-			//    {
-			//        Undo.RecordObject(jobs[i].stream, "Vertex Painter Fill");
-			//        FillMesh(jobs[i]);
-			//    }
-			//    Undo.CollapseUndoOperations(Undo.GetCurrentGroup());
-			//    if (OnEndStroke != null)
-			//    {
-			//        OnEndStroke();
-			//    }
-			//}
-
-			//EditorGUILayout.EndHorizontal();
-
-			//if (customBrush != null)
-			//{
-			//    customBrush.DrawGUI();
-			//}
 		}
 
 		private void DrawPaintGUI()
 		{
-
 			GUILayout.Box("Brush Settings", new GUILayoutOption[] { GUILayout.ExpandWidth(true), GUILayout.Height(20) });
 			var oldBM = brushMode;
 			brushMode = (BrushTarget)EditorGUILayout.EnumPopup("Target Channel", brushMode);
@@ -357,16 +327,20 @@ namespace VertexPainter
 			{
 				UpdateDisplayMode();
 			}
-			if (brushMode == BrushTarget.Color || brushMode == BrushTarget.UV0_AsColor || brushMode == BrushTarget.UV1_AsColor
-			   || brushMode == BrushTarget.UV2_AsColor || brushMode == BrushTarget.UV3_AsColor)
+
+			if (brushMode == BrushTarget.Color || 
+				brushMode == BrushTarget.UV0_AsColor || 
+				brushMode == BrushTarget.UV1_AsColor || 
+				brushMode == BrushTarget.UV2_AsColor || 
+				brushMode == BrushTarget.UV3_AsColor)
 			{
 				brushColorMode = (BrushColorMode)EditorGUILayout.EnumPopup("Blend Mode", (System.Enum)brushColorMode);
-
 				if (brushColorMode == BrushColorMode.Overlay || brushColorMode == BrushColorMode.Normal)
 				{
 					brushColor = EditorGUILayout.ColorField("Brush Color", brushColor);
 
-					if (GUILayout.Button("Reset Palette", EditorStyles.miniButton, GUILayout.Width(80), GUILayout.Height(16)))
+					EditorGUILayout.Space();
+					if (GUILayout.Button("Reset Palette", EditorStyles.miniButton, GUILayout.Width(120), GUILayout.Height(20)))
 					{
 						if (swatches != null)
 						{
@@ -375,9 +349,8 @@ namespace VertexPainter
 						swatches = ColorSwatches.CreateInstance<ColorSwatches>();
 						EditorPrefs.SetString(sSwatchKey, JsonUtility.ToJson(swatches, false));
 					}
-
+					EditorGUILayout.Space();
 					GUILayout.BeginHorizontal();
-
 					for (int i = 0; i < swatches.colors.Length; ++i)
 					{
 						if (GUILayout.Button("", EditorStyles.textField, GUILayout.Width(16), GUILayout.Height(16)))
@@ -387,6 +360,7 @@ namespace VertexPainter
 						EditorGUI.DrawRect(new Rect(GUILayoutUtility.GetLastRect().x + 1, GUILayoutUtility.GetLastRect().y + 1, 14, 14), swatches.colors[i]);
 					}
 					GUILayout.EndHorizontal();
+
 					GUILayout.BeginHorizontal();
 					for (int i = 0; i < swatches.colors.Length; i++)
 					{
@@ -399,7 +373,10 @@ namespace VertexPainter
 					GUILayout.EndHorizontal();
 				}
 			}
-			else if (brushMode == BrushTarget.ValueR || brushMode == BrushTarget.ValueG || brushMode == BrushTarget.ValueB || brushMode == BrushTarget.ValueA)
+			else if (brushMode == BrushTarget.ValueR || 
+				brushMode == BrushTarget.ValueG || 
+				brushMode == BrushTarget.ValueB || 
+				brushMode == BrushTarget.ValueA)
 			{
 				brushValue = (int)EditorGUILayout.Slider("Brush Value", (float)brushValue, 0.0f, 256.0f);
 			}
@@ -413,10 +390,10 @@ namespace VertexPainter
 					UpdateDisplayMode();
 				}
 			}
-
+			//EditorGUILayout.Space();
 			DrawBrushSettingsGUI();
 
-			//GUILayout.Box("", new GUILayoutOption[]{GUILayout.ExpandWidth(true), GUILayout.Height(1)});
+
 			EditorGUILayout.BeginHorizontal();
 			if (GUILayout.Button("Fill"))
 			{
@@ -582,9 +559,9 @@ namespace VertexPainter
 
 			DrawChannelGUI();
 
-			var ot = tab;
+			Tab oldTab = tab;
 			tab = (Tab)GUILayout.Toolbar((int)tab, TAB_NAMES);
-			if (ot != tab)
+			if (oldTab != tab)
 			{
 				UpdateDisplayMode();
 			}
@@ -608,10 +585,6 @@ namespace VertexPainter
 			{
 				scroll = EditorGUILayout.BeginScrollView(scroll);
 				DrawUtilityGUI();
-			}
-			else if (tab == Tab.Custom)
-			{
-				DrawCustomGUI();
 			}
 			EditorGUILayout.EndScrollView();
 		}
@@ -649,7 +622,7 @@ namespace VertexPainter
 			showVertexShader = false;
 			UpdateDisplayMode();
 			showVertexShader = show;
-			DestroyImmediate(VertexInstanceStream.vertexShaderMat);
+			DestroyImmediate(VertexInstanceStream.vertexShaderMaterial);
 			SceneView.duringSceneGui -= this.OnSceneGUI;
 		}
 	}

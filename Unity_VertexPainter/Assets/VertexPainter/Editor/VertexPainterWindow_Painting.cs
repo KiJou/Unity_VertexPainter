@@ -5,14 +5,18 @@ using System.Collections.Generic;
 
 namespace VertexPainter
 {
+	/// <summary>
+	/// Paint Class Throw Shader Params
+	/// </summary>
 	public partial class VertexPainterWindow : EditorWindow
 	{
-		// for external tools
 		public System.Action<PaintJob[]> OnBeginStroke = default;
 
-		// bool is true when doing a fill or other non-bounded opperation
 		public System.Action<PaintJob, bool> OnStokeModified = default;
 		public System.Action OnEndStroke = default;
+
+		public delegate void Multiplier(VertexInstanceStream s, int idx, ref object x);
+		public delegate void Lerper(PaintJob j, int idx, ref object v, float strength);
 
 		public enum FlowTarget
 		{
@@ -101,11 +105,6 @@ namespace VertexPainter
 			Sphere,
 			Disk
 		}
-
-		// only really used for AO, seems like a bit overkill, but it makes things easier..
-		public delegate void Multiplier(VertexInstanceStream s, int idx, ref object x);
-
-		public delegate void Lerper(PaintJob j, int idx, ref object v, float strength);
 
 		public bool enabled = default;
 		public Vector3 oldpos = Vector3.zero;
@@ -1296,10 +1295,9 @@ namespace VertexPainter
 			{
 				EndStroke();
 			}
-			if (VertexInstanceStream.vertexShaderMat == null)
+			if (VertexInstanceStream.vertexShaderMaterial == null)
 			{
-				VertexInstanceStream.vertexShaderMat = new Material(Shader.Find("Hidden/VertexPainterPro_Preview"));
-				VertexInstanceStream.vertexShaderMat.hideFlags = HideFlags.HideAndDontSave;
+				VertexInstanceStream.vertexShaderMaterial = VertexInstanceStream.CreateMaterial();
 			}
 			for (int i = 0; i < jobs.Length; ++i)
 			{
@@ -1310,10 +1308,13 @@ namespace VertexPainter
 					if (!showVertexShader || !enabled)
 					{
 						// restore..
-						if (job.stream.originalMaterial != null && job.stream.originalMaterial.Length > 0 &&
-							job.renderer.sharedMaterial == VertexInstanceStream.vertexShaderMat)
+						if (job.stream.originalMaterial != null && 
+							job.stream.originalMaterial.Length > 0 &&
+							job.renderer.sharedMaterial == VertexInstanceStream.vertexShaderMaterial)
 						{
-							if (job.renderer.sharedMaterials != null && job.renderer.sharedMaterials.Length > 1 &&
+
+							if (job.renderer.sharedMaterials != null && 
+								job.renderer.sharedMaterials.Length > 1 &&
 								job.renderer.sharedMaterials.Length == job.stream.originalMaterial.Length)
 							{
 								Material[] mats = new Material[jobs[i].renderer.sharedMaterials.Length];
@@ -1329,37 +1330,41 @@ namespace VertexPainter
 								job.renderer.sharedMaterial = job.stream.originalMaterial[0];
 							}
 						}
-						else if (job.renderer.sharedMaterial != VertexInstanceStream.vertexShaderMat)
+						else if (job.renderer.sharedMaterial != VertexInstanceStream.vertexShaderMaterial)
 						{
 							job.CaptureMat();
 						}
 					}
 					else if (showVertexShader)
 					{
-						if (job.renderer.sharedMaterial != VertexInstanceStream.vertexShaderMat)
+						if (job.renderer.sharedMaterial != VertexInstanceStream.vertexShaderMaterial)
 						{
 							job.CaptureMat();
 						}
-						if (job.stream.originalMaterial != null && job.stream.originalMaterial.Length > 0)
+
+						if (job.stream.originalMaterial != null && 
+							job.stream.originalMaterial.Length > 0)
 						{
-							if (job.renderer.sharedMaterials != null && job.renderer.sharedMaterials.Length > 1)
+
+							if (job.renderer.sharedMaterials != null && 
+								job.renderer.sharedMaterials.Length > 1)
 							{
 								Material[] mats = new Material[job.renderer.sharedMaterials.Length];
 								for (int x = 0; x < job.renderer.sharedMaterials.Length; ++x)
 								{
-									mats[x] = VertexInstanceStream.vertexShaderMat;
+									mats[x] = VertexInstanceStream.vertexShaderMaterial;
 								}
 								job.renderer.sharedMaterials = mats;
 							}
 							else
 							{
-								job.renderer.sharedMaterial = VertexInstanceStream.vertexShaderMat;
+								job.renderer.sharedMaterial = VertexInstanceStream.vertexShaderMaterial;
 							}
-							VertexInstanceStream.vertexShaderMat.SetInt("_flowVisualization", (int)flowVisualization);
-							VertexInstanceStream.vertexShaderMat.SetInt("_tab", (int)tab);
-							VertexInstanceStream.vertexShaderMat.SetInt("_flowTarget", (int)flowTarget);
-							VertexInstanceStream.vertexShaderMat.SetInt("_channel", (int)brushMode);
-							VertexInstanceStream.vertexShaderMat.SetVector("_uvRange", uvVisualizationRange);
+							VertexInstanceStream.vertexShaderMaterial.SetInt("_flowVisualization", (int)flowVisualization);
+							VertexInstanceStream.vertexShaderMaterial.SetInt("_tab", (int)tab);
+							VertexInstanceStream.vertexShaderMaterial.SetInt("_flowTarget", (int)flowTarget);
+							VertexInstanceStream.vertexShaderMaterial.SetInt("_channel", (int)brushMode);
+							VertexInstanceStream.vertexShaderMaterial.SetVector("_uvRange", uvVisualizationRange);
 						}
 					}
 				}
@@ -2206,9 +2211,9 @@ namespace VertexPainter
 				return;
 			}
 
-			if (VertexInstanceStream.vertexShaderMat != null)
+			if (VertexInstanceStream.vertexShaderMaterial != null)
 			{
-				VertexInstanceStream.vertexShaderMat.SetFloat("_time", (float)EditorApplication.timeSinceStartup);
+				VertexInstanceStream.vertexShaderMaterial.SetFloat("_time", (float)EditorApplication.timeSinceStartup);
 			}
 
 			RaycastHit hit;

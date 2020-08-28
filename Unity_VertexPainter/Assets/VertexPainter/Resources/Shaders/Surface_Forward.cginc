@@ -16,12 +16,8 @@ LAYER(1)
 LAYER(2)
 LAYER(3)
 
-half  _FlowSpeed;
-half  _FlowIntensity;
-fixed _FlowAlpha;
-half  _FlowRefraction;
-float _DistBlendMin;
-float _DistBlendMax;
+half  _FlowSpeed, _FlowIntensity, _FlowAlpha, _FlowRefraction;
+half _DistBlendMin, _DistBlendMax;
 
 struct Input 
 {
@@ -34,7 +30,7 @@ struct Input
 
 struct PSInput
 {
-	UNITY_POSITION(pos);
+	float4 pos : POSITION;
 	float4 color : COLOR;
 
 	float2 uv : TEXCOORD0;
@@ -164,11 +160,10 @@ PSInput VSMain(appdata_full  v)
 	return o;
 }
 
-// PS inlucde surface function
 void surf(Input IN, inout SurfaceOutputStandard o)
 {
 	COMPUTEDISTBLEND
-// SplatBlendSpecular_1Layer
+// Surface_1Layer
 #ifdef _LAYERONE
 	float2 uv1 = IN.uv_MainTex * _TexScale1;
 	INIT_FLOW
@@ -209,7 +204,7 @@ void surf(Input IN, inout SurfaceOutputStandard o)
 	o.Albedo = c1.rgb;
 
 
-// SplatBlendSpecular_2Layer
+// Surface_2Layer
 #elif _LAYERTWO
 	float2 uv1 = IN.uv_MainTex * _TexScale1;
 	float2 uv2 = IN.uv_MainTex * _TexScale2;
@@ -247,7 +242,7 @@ void surf(Input IN, inout SurfaceOutputStandard o)
 			fuv2 += offset;
 		#endif
 	#endif
-	fixed4 c = lerp(c1 * _Tint1, c2 * _Tint2, b1);
+	fixed4 color = lerp(c1 * _Tint1, c2 * _Tint2, b1);
 	#if _SPECGLOSSMAP
 		fixed4 g1 = FETCH_TEX1(_SpecGlossMap1, uv1);
 		fixed4 g2 = FETCH_TEX2(_SpecGlossMap2, uv2);
@@ -268,10 +263,10 @@ void surf(Input IN, inout SurfaceOutputStandard o)
 		half4 n2 = FETCH_TEX2(_Normal2, uv2);
 		o.Normal = UnpackNormal(lerp(n1, n2, b1));
 	#endif
-	o.Albedo = c.rgb;
+	o.Albedo = color.rgb;
 
 
-// SplatBlendSpecular_3Layer
+// Surface_3Layer
 #elif _LAYERTHREE
 	float2 uv1 = IN.uv_MainTex * _TexScale1;
 	float2 uv2 = IN.uv_MainTex * _TexScale2;
@@ -329,7 +324,7 @@ void surf(Input IN, inout SurfaceOutputStandard o)
 			fuv2 += offset;
 		#endif
 	#endif
-	fixed4 c = lerp(lerp(c1 * _Tint1, c2 * _Tint2, b1), c3 * _Tint3, b2);
+	fixed4 color = lerp(lerp(c1 * _Tint1, c2 * _Tint2, b1), c3 * _Tint3, b2);
 	#if _SPECGLOSSMAP
 		fixed4 g1 = FETCH_TEX1(_SpecGlossMap1, uv1);
 		fixed4 g2 = FETCH_TEX2(_SpecGlossMap2, uv2);
@@ -353,7 +348,7 @@ void surf(Input IN, inout SurfaceOutputStandard o)
 		half4 n3 = (FETCH_TEX3(_Normal3, uv3));
 		o.Normal = UnpackNormal(lerp(lerp(n1, n2, b1), n3, b2));
 	#endif
-	o.Albedo = c.rgb;
+	o.Albedo = color.rgb;
 #endif
 
 }
@@ -374,22 +369,26 @@ fixed4 PSMain(PSInput i) : SV_Target
 	surfIN.uv_MainTex = i.uv;
 	surfIN.color = i.color;
 
-	SurfaceOutputStandard o;
-	UNITY_INITIALIZE_OUTPUT(SurfaceOutputStandard, o);
-	o.Albedo = 0.0;
-	o.Emission = 0.0;
-	o.Alpha = 0.0;
-	o.Occlusion = 1.0;
-	o.Normal = i.worldNormal;
-	surf(surfIN, o);
+	// Create Surface
+	SurfaceOutputStandard output;
+	UNITY_INITIALIZE_OUTPUT(SurfaceOutputStandard, output);
+	output.Albedo = 0.0;
+	output.Emission = 0.0;
+	output.Alpha = 0.0;
+	output.Occlusion = 1.0;
+	output.Normal = i.worldNormal;
+	surf(surfIN, output);
 	UNITY_LIGHT_ATTENUATION(atten, i, worldPos)
-	half4 color = 0;
+
+	// Create GI
 	UnityGI gi;
 	UNITY_INITIALIZE_OUTPUT(UnityGI, gi);
 	gi.indirect.diffuse = 0;
 	gi.indirect.specular = 0;
 	gi.light.color = _LightColor0.rgb;
 	gi.light.dir = lightDir;
+
+	// Create GIInput
 	UnityGIInput giInput;
 	UNITY_INITIALIZE_OUTPUT(UnityGIInput, giInput);
 	giInput.light = gi.light;
@@ -407,8 +406,9 @@ fixed4 PSMain(PSInput i) : SV_Target
 #if defined(UNITY_SPECCUBE_BLENDING) || defined(UNITY_SPECCUBE_BOX_PROJECTION)
 	giInput.boxMin[0] = unity_SpecCube0_BoxMin;
 #endif
-	LightingStandard_GI(o, giInput, gi);
-	color += LightingStandard(o, worldViewDir, gi);
+
+	LightingStandard_GI(output, giInput, gi);
+	half4 color = LightingStandard(output, worldViewDir, gi);
 	UNITY_APPLY_FOG(i.fogCoord, color);
 	UNITY_OPAQUE_ALPHA(color.a);
 	return color;

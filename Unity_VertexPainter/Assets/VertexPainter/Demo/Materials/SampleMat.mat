@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: SampleMat
   m_Shader: {fileID: 4800000, guid: b8f6f8bbecfe84b8faaf58ae19a6469c, type: 3}
-  m_ShaderKeywords: _DISTBLEND _FLOW2 _FLOWREFRACTION _LAYERS3 _NORMALMAP
+  m_ShaderKeywords: _DISTBLEND _FLOW2 _FLOWDRIFT _FLOWREFRACTION _LAYERS3 _NORMALMAP
   m_LightmapFlags: 5
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -130,7 +130,7 @@ Material:
     m_Floats:
     - _BumpScale: 1
     - _Contrast2: 0.782
-    - _Contrast3: 0.393
+    - _Contrast3: 0.155
     - _Contrast4: 0.5
     - _CullMode: 2
     - _Cutoff: 0.5
@@ -147,12 +147,12 @@ Material:
     - _EmissiveMult2: 0.31
     - _EmissiveMult3: 1
     - _EmissiveMult4: 1
-    - _FlowAlpha: 0.87
-    - _FlowIntensity: 0
-    - _FlowRefraction: 0.126
-    - _FlowSpeed: 0.88
+    - _FlowAlpha: 1
+    - _FlowIntensity: 0.48
+    - _FlowRefraction: 0.139
+    - _FlowSpeed: 0.86
     - _Glossiness: 0.5
-    - _Glossiness1: 0.315
+    - _Glossiness1: 0.284
     - _Glossiness2: 0.139
     - _Glossiness3: 0.529
     - _Glossiness4: 0.5
@@ -177,10 +177,10 @@ Material:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor1: {r: 0.060742266, g: 0.116013326, b: 0.3301887, a: 0.2}
-    - _SpecColor2: {r: 0.3773585, g: 0.22961909, b: 0.22961909, a: 0.2}
-    - _SpecColor3: {r: 0.2, g: 0.2, b: 0.2, a: 0.2}
+    - _SpecColor2: {r: 0.9622642, g: 0.7307761, b: 0.7307761, a: 0.2}
+    - _SpecColor3: {r: 0.1509434, g: 0.1509434, b: 0.1509434, a: 0.2}
     - _SpecColor4: {r: 0.2, g: 0.2, b: 0.2, a: 0.2}
     - _Tint1: {r: 1, g: 1, b: 1, a: 1}
-    - _Tint2: {r: 0.9811321, g: 0.79334587, b: 0.68956923, a: 1}
-    - _Tint3: {r: 1, g: 1, b: 1, a: 1}
+    - _Tint2: {r: 0.9716981, g: 0.7427718, b: 0.61877, a: 1}
+    - _Tint3: {r: 0.8490566, g: 0.8490566, b: 0.8490566, a: 1}
     - _Tint4: {r: 1, g: 1, b: 1, a: 1}

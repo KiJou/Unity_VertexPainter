@@ -17,7 +17,7 @@ struct Input
 
 struct PSInput
 {
-	UNITY_POSITION(pos);
+	float4 pos : POSITION;
 	float2 uv : TEXCOORD0;
 	float3 worldNormal : TEXCOORD1;
 	float3 worldPos : TEXCOORD2;
@@ -56,6 +56,7 @@ fixed4 PSMain(PSInput IN) : SV_Target
 	float3 worldPos = IN.worldPos;
 	float3 worldViewDir = normalize(UnityWorldSpaceViewDir(worldPos));
 	fixed3 lightDir = normalize(UnityWorldSpaceLightDir(worldPos));
+
 	SurfaceOutputStandard o;
 	UNITY_INITIALIZE_OUTPUT(SurfaceOutputStandard, o);
 	o.Albedo = 0.0;
@@ -65,7 +66,7 @@ fixed4 PSMain(PSInput IN) : SV_Target
 	o.Normal = IN.worldNormal;
 	surf(surfIN, o);
 	UNITY_LIGHT_ATTENUATION(atten, IN, worldPos)
-	fixed4 color = 0;
+
 	UnityGI gi;
 	UNITY_INITIALIZE_OUTPUT(UnityGI, gi);
 	gi.indirect.diffuse = 0;
@@ -73,7 +74,9 @@ fixed4 PSMain(PSInput IN) : SV_Target
 	gi.light.color = _LightColor0.rgb;
 	gi.light.dir = lightDir;
 	gi.light.color *= atten;
-	color += LightingStandard(o, worldViewDir, gi);
+
+	// Create finalColor
+	fixed4 color = LightingStandard(o, worldViewDir, gi);
 	color.a = 0.0;
 	UNITY_APPLY_FOG(IN.fogCoord, color);
 	UNITY_OPAQUE_ALPHA(color.a);

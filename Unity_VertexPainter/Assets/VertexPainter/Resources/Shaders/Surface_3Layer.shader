@@ -5,8 +5,8 @@ Shader "VertexPainter/Surface_3Layer"
 	{
 		[Enum(OFF,0,FRONT,1,BACK,2)] _CullMode("Cull Mode", int) = 2
 		// 1Layer
-		_Tex1("Albedo + Height", 2D) = "white" {}
-		_Tint1("Tint", Color) = (1, 1, 1, 1)
+		_Tex1("Base Texture", 2D) = "white" {}
+		_Tint1("Base Color", Color) = (1, 1, 1, 1)
 		[NoScaleOffset][Normal]_Normal1("Normal", 2D) = "bump" {}
 		_Glossiness1("Smoothness", Range(0,1)) = 0.5
 		_SpecColor1("Specular Color", Color) = (0.2, 0.2, 0.2, 0.2)
@@ -16,8 +16,8 @@ Shader "VertexPainter/Surface_3Layer"
 		_Parallax1("Parallax Height", Range(0.005, 0.08)) = 0.02
 		_TexScale1("Texture Scale", Float) = 1
 		// 2Layer
-		_Tex2("Albedo + Height", 2D) = "white" {}
-		_Tint2("Tint", Color) = (1, 1, 1, 1)
+		_Tex2("Base Texture", 2D) = "white" {}
+		_Tint2("Base Color", Color) = (1, 1, 1, 1)
 		[NoScaleOffset][Normal]_Normal2("Normal", 2D) = "bump" {}
 		_Glossiness2("Smoothness", Range(0,1)) = 0.5
 		_SpecColor2("Specular Color", Color) = (0.2, 0.2, 0.2, 0.2)
@@ -29,8 +29,8 @@ Shader "VertexPainter/Surface_3Layer"
 		_TexScale2("Texture Scale", Float) = 1
 		_Contrast2("Contrast", Range(0,0.99)) = 0.5
 		// 3Layer
-		_Tex3("Albedo + Height", 2D) = "white" {}
-		_Tint3("Tint", Color) = (1, 1, 1, 1)
+		_Tex3("Base Texture", 2D) = "white" {}
+		_Tint3("Base Color", Color) = (1, 1, 1, 1)
 		[NoScaleOffset][Normal]_Normal3("Normal", 2D) = "bump" {}
 		_Glossiness3("Smoothness", Range(0,1)) = 0.5
 		_SpecColor3("Specular Color", Color) = (0.2, 0.2, 0.2, 0.2)
