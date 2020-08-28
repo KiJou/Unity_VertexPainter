@@ -15,7 +15,6 @@ Shader "VertexPainter/SplatBlendSpecular_3Layer"
 		_EmissiveMult1("Emissive Multiplier", Float) = 1
 		_Parallax1("Parallax Height", Range(0.005, 0.08)) = 0.02
 		_TexScale1("Texture Scale", Float) = 1
-
 		// 2Layer
 		_Tex2("Albedo + Height", 2D) = "white" {}
 		_Tint2("Tint", Color) = (1, 1, 1, 1)
@@ -29,7 +28,6 @@ Shader "VertexPainter/SplatBlendSpecular_3Layer"
 		_Parallax2("Parallax Height", Range(0.005, 0.08)) = 0.02
 		_TexScale2("Texture Scale", Float) = 1
 		_Contrast2("Contrast", Range(0,0.99)) = 0.5
-
 		// 3Layer
 		_Tex3("Albedo + Height", 2D) = "white" {}
 		_Tint3("Tint", Color) = (1, 1, 1, 1)
@@ -65,6 +63,9 @@ Shader "VertexPainter/SplatBlendSpecular_3Layer"
 			Cull[_CullMode]
 			CGPROGRAM
 			#pragma target 3.0
+			#pragma vertex VSMain
+			#pragma fragment PSMain
+			#pragma multi_compile_instancing
 			#pragma multi_compile_fog
 			#pragma multi_compile_fwdbase
 			#pragma shader_feature _ _PARALLAXMAP
@@ -76,10 +77,8 @@ Shader "VertexPainter/SplatBlendSpecular_3Layer"
 			#pragma shader_feature _ _FLOWREFRACTION
 			#pragma shader_feature _ _DISTBLEND
 			#pragma multi_compile _LAYERTHREE
-			#pragma vertex VSMain
-			#pragma fragment PSMain
 			#include "UnityCG.cginc"
-			#include "SplatBlend_Shared.cginc"
+			#include "SplatBlend_Forward.cginc"
 			ENDCG
 		}
 
@@ -93,13 +92,13 @@ Shader "VertexPainter/SplatBlendSpecular_3Layer"
 			ZTest LEqual
 
 			CGPROGRAM
-			#pragma vertex vertAdd
-			#pragma fragment fragAdd
+			#pragma vertex VSMain
+			#pragma fragment PSMain
 			#pragma target 3.0
 			#pragma multi_compile_fwdadd
 			#pragma multi_compile_fwdadd_fullshadows
 			#pragma multi_compile_fog
-			#include "UnityStandardCoreForward.cginc"
+			#include "SplatBlend_ForwardAdd.cginc"
 			ENDCG
 		}
 
@@ -135,6 +134,7 @@ Shader "VertexPainter/SplatBlendSpecular_3Layer"
 			#include "UnityStandardMeta.cginc"
 			ENDCG
 		}
+
 	}
 	CustomEditor "VertexPainter.CustomShaderGUI"
 	FallBack Off

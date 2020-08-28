@@ -1,5 +1,5 @@
-#ifndef SPLATBLEND_SHARED_INCLUDED
-#define SPLATBLEND_SHARED_INCLUDED
+#ifndef SPLATBLEND_FORWARD_INCLUDED
+#define SPLATBLEND_FORWARD_INCLUDED
 
 #include "HLSLSupport.cginc"
 #include "UnityShaderVariables.cginc"
@@ -25,7 +25,7 @@ float _DistBlendMax;
 
 struct Input 
 {
-    float2 uv_Tex1;
+    float2 uv_MainTex;
     float4 color;
     float3 worldPos;
     float3 worldNormal;
@@ -119,7 +119,6 @@ PSInput VSMain(appdata_full  v)
 	UNITY_INITIALIZE_OUTPUT(PSInput, o);
 	UNITY_SETUP_INSTANCE_ID(v);
 	UNITY_TRANSFER_INSTANCE_ID(v, o);
-
 	float3 worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
 	float3 worldNormal = UnityObjectToWorldNormal(v.normal);
 	o.worldPos = worldPos;
@@ -142,7 +141,6 @@ PSInput VSMain(appdata_full  v)
 #if (_FLOW3)
     o.flowDir.xy *= _TexScale3; 
 #endif
-
 
 #ifdef DYNAMICLIGHTMAP_ON
 	o.lightMap.zw = v.texcoord2.xy * unity_DynamicLightmapST.xy + unity_DynamicLightmapST.zw;
@@ -172,7 +170,7 @@ void surf(Input IN, inout SurfaceOutputStandard o)
 	COMPUTEDISTBLEND
 // SplatBlendSpecular_1Layer
 #ifdef _LAYERONE
-	float2 uv1 = IN.uv_Tex1 * _TexScale1;
+	float2 uv1 = IN.uv_MainTex * _TexScale1;
 	INIT_FLOW
 	#if _FLOWDRIFT || !_PARALLAXMAP 
 		fixed4 c1 = FETCH_TEX1(_Tex1, uv1);
@@ -216,8 +214,8 @@ void surf(Input IN, inout SurfaceOutputStandard o)
 
 // SplatBlendSpecular_2Layer
 #elif _LAYERTWO
-	float2 uv1 = IN.uv_Tex1 * _TexScale1;
-	float2 uv2 = IN.uv_Tex1 * _TexScale2;
+	float2 uv1 = IN.uv_MainTex * _TexScale1;
+	float2 uv2 = IN.uv_MainTex * _TexScale2;
 	INIT_FLOW
 	#if _FLOWDRIFT || !_PARALLAXMAP 
 		fixed4 c1 = FETCH_TEX1(_Tex1, uv1);
@@ -281,9 +279,9 @@ void surf(Input IN, inout SurfaceOutputStandard o)
 
 // SplatBlendSpecular_3Layer
 #elif _LAYERTHREE
-	float2 uv1 = IN.uv_Tex1 * _TexScale1;
-	float2 uv2 = IN.uv_Tex1 * _TexScale2;
-	float2 uv3 = IN.uv_Tex1 * _TexScale3;
+	float2 uv1 = IN.uv_MainTex * _TexScale1;
+	float2 uv2 = IN.uv_MainTex * _TexScale2;
+	float2 uv3 = IN.uv_MainTex * _TexScale3;
 	INIT_FLOW
 
 	#if _FLOWDRIFT || !_PARALLAXMAP 
@@ -301,7 +299,7 @@ void surf(Input IN, inout SurfaceOutputStandard o)
 	#endif
 
 	half b1 = HeightBlend(c1.a, c2.a, IN.color.r, _Contrast2);
-	fixed h1 = lerp(c1.a, c2.a, b1);
+	half h1 = lerp(c1.a, c2.a, b1);
 	half b2 = HeightBlend(h1, c3.a, IN.color.g, _Contrast3);
 
 	#if _FLOW2
@@ -388,7 +386,7 @@ fixed4 PSMain(PSInput i) : SV_Target
 #endif
 	Input surfIN;
 	UNITY_INITIALIZE_OUTPUT(Input, surfIN);
-	surfIN.uv_Tex1 = i.uv;
+	surfIN.uv_MainTex = i.uv;
 	surfIN.color = i.color;
 
 	SurfaceOutputStandard o;
@@ -431,35 +429,6 @@ fixed4 PSMain(PSInput i) : SV_Target
 	UNITY_APPLY_FOG(i.fogCoord, color);
 	UNITY_OPAQUE_ALPHA(color.a);
 	return color;
-}
-
-
-// @NOTE
-// Old Surface Function
-void SharedVert (inout appdata_full v, out Input o) 
-{
-    UNITY_INITIALIZE_OUTPUT(Input, o);
-#if (_FLOW1 || _FLOW2 || _FLOW3)
-    o.flowDir.xy = v.texcoord.xy;
-    o.flowDir.zw = v.texcoord2.xy;
-#endif
-    
-#if (_FLOW1)
-    o.flowDir.xy *= _TexScale1;
-#endif
-#if (_FLOW2)
-    o.flowDir.xy *= _TexScale2;
-#endif
-#if (_FLOW3)
-    o.flowDir.xy *= _TexScale3; 
-#endif
-
-    o.uv_Tex1 = v.texcoord.xy;
-    o.color = v.color;
-    float3 worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
-    float3 worldNormal = UnityObjectToWorldNormal(v.normal);
-    o.worldPos = worldPos;
-    o.worldNormal = worldNormal;
 }
 
 #endif

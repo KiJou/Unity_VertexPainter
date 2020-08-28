@@ -49,6 +49,9 @@ Shader "VertexPainter/SplatBlendSpecular_2Layer"
 			Cull[_CullMode]
 			CGPROGRAM
 			#pragma target 3.0
+			#pragma vertex VSMain
+			#pragma fragment PSMain
+			#pragma multi_compile_instancing
 			#pragma multi_compile_fog
 			#pragma multi_compile_fwdbase
 			#pragma shader_feature _ _PARALLAXMAP
@@ -60,10 +63,8 @@ Shader "VertexPainter/SplatBlendSpecular_2Layer"
 			#pragma shader_feature _ _FLOWREFRACTION
 			#pragma shader_feature _ _DISTBLEND
 			#pragma multi_compile _LAYERTWO
-			#pragma vertex VSMain
-			#pragma fragment PSMain
 			#include "UnityCG.cginc"
-			#include "SplatBlend_Shared.cginc"
+			#include "SplatBlend_Forward.cginc"
 			ENDCG
 		}
 
@@ -77,13 +78,13 @@ Shader "VertexPainter/SplatBlendSpecular_2Layer"
 			ZTest LEqual
 
 			CGPROGRAM
-			#pragma vertex vertAdd
-			#pragma fragment fragAdd
+			#pragma vertex VSMain
+			#pragma fragment PSMain
 			#pragma target 3.0
 			#pragma multi_compile_fwdadd
 			#pragma multi_compile_fwdadd_fullshadows
 			#pragma multi_compile_fog
-			#include "UnityStandardCoreForward.cginc"
+			#include "SplatBlend_ForwardAdd.cginc"
 			ENDCG
 		}
 
@@ -119,6 +120,7 @@ Shader "VertexPainter/SplatBlendSpecular_2Layer"
 			#include "UnityStandardMeta.cginc"
 			ENDCG
 		}
+
 	}
 	CustomEditor "VertexPainter.CustomShaderGUI"
 	FallBack Off
