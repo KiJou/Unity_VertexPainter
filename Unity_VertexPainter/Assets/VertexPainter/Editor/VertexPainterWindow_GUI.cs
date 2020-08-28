@@ -87,7 +87,7 @@ namespace VertexPainter
 			if (DrawRollup("Vertex Painter"))
 			{
 				bool oldEnabled = enabled;
-				enabled = GUILayout.Toggle(enabled, "Active (ESC)");
+				enabled = GUILayout.Toggle(enabled, "Active");
 				if (enabled != oldEnabled)
 				{
 					InitMeshes();
@@ -95,7 +95,7 @@ namespace VertexPainter
 				}
 				var oldShow = showVertexShader;
 				EditorGUILayout.BeginHorizontal();
-				showVertexShader = GUILayout.Toggle(showVertexShader, "Show Vertex Data (ctrl-V)");
+				showVertexShader = GUILayout.Toggle(showVertexShader, "Show Vertex Data");
 				if (oldShow != showVertexShader)
 				{
 					UpdateDisplayMode();

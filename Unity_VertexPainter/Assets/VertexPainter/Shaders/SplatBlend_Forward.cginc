@@ -179,7 +179,6 @@ void surf(Input IN, inout SurfaceOutputStandard o)
 	#else
 		fixed4 c1 = tex2D(_Tex1, uv1);
 	#endif
-
 	#if _PARALLAXMAP
 		float parallax = _Parallax1;
 		float2 offset = ParallaxOffset(c1.a, parallax, IN.worldPos);
@@ -191,7 +190,6 @@ void surf(Input IN, inout SurfaceOutputStandard o)
 		c1 = FETCH_TEX1(_Tex1, uv1);
 	#endif
 	c1 *= _Tint1;
-
 	#if _SPECGLOSSMAP
 		fixed4 g1 = FETCH_TEX1(_SpecGlossMap1, uv1);
 		o.Smoothness = g1.a;
@@ -200,17 +198,16 @@ void surf(Input IN, inout SurfaceOutputStandard o)
 		o.Smoothness = _Glossiness1;
 		o.Metallic = _SpecColor1.rgb;
 	#endif 
-
 	#if _EMISSION
 		fixed4 e1 = FETCH_TEX1(_Emissive1, uv1);
 		o.Emission = e1.rgb * _EmissiveMult1;
 	#endif
-
 	#if _NORMALMAP
 		fixed4 n1 = FETCH_TEX1(_Normal1, uv1);
 		o.Normal = UnpackNormal(n1);
 	#endif
 	o.Albedo = c1.rgb;
+
 
 // SplatBlendSpecular_2Layer
 #elif _LAYERTWO
@@ -238,7 +235,6 @@ void surf(Input IN, inout SurfaceOutputStandard o)
 			#endif
 		#endif
 	#endif
-
 	#if _PARALLAXMAP
 		float parallax = lerp(_Parallax1, _Parallax2, b1);
 		float2 offset = ParallaxOffset(lerp(c1.a, c2.a, b1), parallax, IN.worldPos);
@@ -251,7 +247,6 @@ void surf(Input IN, inout SurfaceOutputStandard o)
 			fuv2 += offset;
 		#endif
 	#endif
-
 	fixed4 c = lerp(c1 * _Tint1, c2 * _Tint2, b1);
 	#if _SPECGLOSSMAP
 		fixed4 g1 = FETCH_TEX1(_SpecGlossMap1, uv1);
@@ -263,13 +258,11 @@ void surf(Input IN, inout SurfaceOutputStandard o)
 		o.Smoothness = lerp(_Glossiness1, _Glossiness2, b1);
 		o.Metallic = lerp(_SpecColor1, _SpecColor2, b1).rgb;
 	#endif
-
 	#if _EMISSION
 		fixed4 e1 = FETCH_TEX1(_Emissive1, uv1);
 		fixed4 e2 = FETCH_TEX2(_Emissive2, uv2);
 		o.Emission = lerp(e1.rgb * _EmissiveMult1, e2.rgb * _EmissiveMult2, b1);
 	#endif
-
 	#if _NORMALMAP
 		half4 n1 = FETCH_TEX1(_Normal1, uv1);
 		half4 n2 = FETCH_TEX2(_Normal2, uv2);
@@ -277,13 +270,13 @@ void surf(Input IN, inout SurfaceOutputStandard o)
 	#endif
 	o.Albedo = c.rgb;
 
+
 // SplatBlendSpecular_3Layer
 #elif _LAYERTHREE
 	float2 uv1 = IN.uv_MainTex * _TexScale1;
 	float2 uv2 = IN.uv_MainTex * _TexScale2;
 	float2 uv3 = IN.uv_MainTex * _TexScale3;
 	INIT_FLOW
-
 	#if _FLOWDRIFT || !_PARALLAXMAP 
 		fixed4 c1 = FETCH_TEX1(_Tex1, uv1);
 		fixed4 c2 = FETCH_TEX2(_Tex2, uv2);
@@ -297,11 +290,9 @@ void surf(Input IN, inout SurfaceOutputStandard o)
 		fixed4 c2 = tex2D(_Tex2, uv2);
 		fixed4 c3 = tex2D(_Tex3, uv3);
 	#endif
-
 	half b1 = HeightBlend(c1.a, c2.a, IN.color.r, _Contrast2);
 	half h1 = lerp(c1.a, c2.a, b1);
 	half b2 = HeightBlend(h1, c3.a, IN.color.g, _Contrast3);
-
 	#if _FLOW2
 		b1 *= _FlowAlpha;
 		#if _FLOWREFRACTION && _NORMALMAP
@@ -312,7 +303,6 @@ void surf(Input IN, inout SurfaceOutputStandard o)
 			#endif
 		#endif
 	#endif
-
 	#if _FLOW3
 		b2 *= _FlowAlpha;
 		#if _FLOWREFRACTION && _NORMALMAP
@@ -325,7 +315,6 @@ void surf(Input IN, inout SurfaceOutputStandard o)
 			#endif
 		#endif
 	#endif
-
 	#if _PARALLAXMAP
 		float parallax = lerp(lerp(_Parallax1, _Parallax2, b1), _Parallax3, b2);
 		float2 offset = ParallaxOffset(lerp(lerp(c1.a, c2.a, b1), c3.a, b2), parallax, IN.worldPos);
@@ -340,9 +329,7 @@ void surf(Input IN, inout SurfaceOutputStandard o)
 			fuv2 += offset;
 		#endif
 	#endif
-
 	fixed4 c = lerp(lerp(c1 * _Tint1, c2 * _Tint2, b1), c3 * _Tint3, b2);
-
 	#if _SPECGLOSSMAP
 		fixed4 g1 = FETCH_TEX1(_SpecGlossMap1, uv1);
 		fixed4 g2 = FETCH_TEX2(_SpecGlossMap2, uv2);
@@ -354,14 +341,12 @@ void surf(Input IN, inout SurfaceOutputStandard o)
 		o.Smoothness = lerp(lerp(_Glossiness1, _Glossiness2, b1), _Glossiness3, b2);
 		o.Metallic = lerp(lerp(_SpecColor1, _SpecColor2, b1), _SpecColor3, b2).rgb;
 	#endif
-
 	#if _EMISSION
 		fixed4 e1 = FETCH_TEX1(_Emissive1, uv1);
 		fixed4 e2 = FETCH_TEX2(_Emissive2, uv2);
 		fixed4 e3 = FETCH_TEX3(_Emissive3, uv3);
 		o.Emission = lerp(lerp(e1.rgb * _EmissiveMult1, e2.rgb * _EmissiveMult2, b1), e3.rgb * _EmissiveMult3, b2);
 	#endif
-
 	#if _NORMALMAP
 		half4 n1 = (FETCH_TEX1(_Normal1, uv1));
 		half4 n2 = (FETCH_TEX2(_Normal2, uv2));
@@ -422,8 +407,6 @@ fixed4 PSMain(PSInput i) : SV_Target
 #if defined(UNITY_SPECCUBE_BLENDING) || defined(UNITY_SPECCUBE_BOX_PROJECTION)
 	giInput.boxMin[0] = unity_SpecCube0_BoxMin;
 #endif
-
-	// UnityPBSLighting 
 	LightingStandard_GI(o, giInput, gi);
 	color += LightingStandard(o, worldViewDir, gi);
 	UNITY_APPLY_FOG(i.fogCoord, color);

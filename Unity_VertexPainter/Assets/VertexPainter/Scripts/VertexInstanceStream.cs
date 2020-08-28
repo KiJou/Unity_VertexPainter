@@ -76,10 +76,8 @@ namespace VertexPainter
 
 		public List<Vector4> uv0
 		{
-			get
-			{
-				return _uv0;
-			}
+			get => _uv0;
+
 			set
 			{
 				_uv0 = value;
@@ -89,10 +87,8 @@ namespace VertexPainter
 
 		public List<Vector4> uv1
 		{
-			get
-			{
-				return _uv1;
-			}
+			get => _uv1;
+
 			set
 			{
 				_uv1 = value;
@@ -102,10 +98,8 @@ namespace VertexPainter
 
 		public List<Vector4> uv2
 		{
-			get
-			{
-				return _uv2;
-			}
+			get => _uv2;
+
 			set
 			{
 				_uv2 = value;
@@ -115,10 +109,8 @@ namespace VertexPainter
 
 		public List<Vector4> uv3
 		{
-			get
-			{
-				return _uv3;
-			}
+			get => _uv3;
+
 			set
 			{
 				_uv3 = value;
@@ -128,10 +120,8 @@ namespace VertexPainter
 
 		public Vector3[] positions
 		{
-			get
-			{
-				return _positions;
-			}
+			get => _positions;
+
 			set
 			{
 				_positions = value;
@@ -141,10 +131,8 @@ namespace VertexPainter
 
 		public Vector3[] normals
 		{
-			get
-			{
-				return _normals;
-			}
+			get => _normals;
+
 			set
 			{
 				_normals = value;
@@ -154,10 +142,8 @@ namespace VertexPainter
 
 		public Vector4[] tangents
 		{
-			get
-			{
-				return _tangents;
-			}
+			get => _tangents;
+
 			set
 			{
 				_tangents = value;
@@ -174,13 +160,13 @@ namespace VertexPainter
 			}
 			if (cachedPositions == null)
 			{
-				MeshFilter mf = GetComponent<MeshFilter>();
-				if (mf == null || mf.sharedMesh == null)
+				MeshFilter meshFilter = GetComponent<MeshFilter>();
+				if (meshFilter == null || meshFilter.sharedMesh == null)
 				{
 					Debug.LogError("No Mesh Filter or Mesh available");
 					return Vector3.zero;
 				}
-				cachedPositions = mf.sharedMesh.vertices;
+				cachedPositions = meshFilter.sharedMesh.vertices;
 			}
 			if (index < cachedPositions.Length)
 			{
@@ -197,13 +183,13 @@ namespace VertexPainter
 			}
 			if (cachedPositions == null)
 			{
-				MeshFilter mf = GetComponent<MeshFilter>();
-				if (mf == null || mf.sharedMesh == null)
+				MeshFilter meshFilter = GetComponent<MeshFilter>();
+				if (meshFilter == null || meshFilter.sharedMesh == null)
 				{
 					Debug.LogError("No Mesh Filter or Mesh available");
 					return Vector3.zero;
 				}
-				cachedNormals = mf.sharedMesh.normals;
+				cachedNormals = meshFilter.sharedMesh.normals;
 			}
 			if (cachedNormals != null && index < cachedNormals.Length)
 			{
@@ -220,13 +206,13 @@ namespace VertexPainter
 			}
 			if (cachedTangents == null)
 			{
-				MeshFilter mf = GetComponent<MeshFilter>();
-				if (mf == null || mf.sharedMesh == null)
+				MeshFilter meshFilter = GetComponent<MeshFilter>();
+				if (meshFilter == null || meshFilter.sharedMesh == null)
 				{
 					Debug.LogError("No Mesh Filter or Mesh available");
 					return Vector3.zero;
 				}
-				cachedTangents = mf.sharedMesh.tangents;
+				cachedTangents = meshFilter.sharedMesh.tangents;
 			}
 			if (cachedTangents != null && index < cachedTangents.Length)
 			{
@@ -238,32 +224,35 @@ namespace VertexPainter
 		private void Awake()
 		{
 			MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
-			if (meshRenderer != null)
+			if (meshRenderer == null)
 			{
-				if (meshRenderer.sharedMaterials != null && 
-					meshRenderer.sharedMaterial == vertexShaderMat && 
-					originalMaterial != null && 
-					originalMaterial.Length == meshRenderer.sharedMaterials.Length && 
-					originalMaterial.Length > 1)
+				return;
+			}
+
+			if (meshRenderer.sharedMaterials != null &&
+				meshRenderer.sharedMaterial == vertexShaderMat &&
+				originalMaterial != null &&
+				originalMaterial.Length == meshRenderer.sharedMaterials.Length &&
+				originalMaterial.Length > 1)
+			{
+				Material[] materials = new Material[meshRenderer.sharedMaterials.Length];
+				for (int i = 0; i < meshRenderer.sharedMaterials.Length; ++i)
 				{
-					Material[] materials = new Material[meshRenderer.sharedMaterials.Length];
-					for (int i = 0; i < meshRenderer.sharedMaterials.Length; ++i)
+					if (originalMaterial[i] != null)
 					{
-						if (originalMaterial[i] != null)
-						{
-							materials[i] = originalMaterial[i];
-						}
+						materials[i] = originalMaterial[i];
 					}
-					meshRenderer.sharedMaterials = materials;
 				}
-				else if (originalMaterial != null && originalMaterial.Length > 0)
+				meshRenderer.sharedMaterials = materials;
+			}
+			else if (originalMaterial != null && originalMaterial.Length > 0)
+			{
+				if (originalMaterial[0] != null)
 				{
-					if (originalMaterial[0] != null)
-					{
-						meshRenderer.sharedMaterial = originalMaterial[0];
-					}
+					meshRenderer.sharedMaterial = originalMaterial[0];
 				}
 			}
+
 		}
 #endif
 
@@ -276,6 +265,17 @@ namespace VertexPainter
 				_positions = meshFilter.sharedMesh.vertices;
 			}
 		}
+
+#if UNITY_EDITOR
+		private void Update()
+		{
+			if (meshRend == null)
+			{
+				meshRend = GetComponent<MeshRenderer>();
+			}
+			meshRend.additionalVertexStreams = meshStream;
+		}
+#endif
 
 		private void OnDestroy()
 		{
@@ -661,15 +661,6 @@ namespace VertexPainter
 				_colors[i].g = ba.y;
 			}
 			Apply();
-		}
-
-		private void Update()
-		{
-			if (meshRend == null)
-			{
-				meshRend = GetComponent<MeshRenderer>();
-			}
-			meshRend.additionalVertexStreams = meshStream;
 		}
 #endif
 

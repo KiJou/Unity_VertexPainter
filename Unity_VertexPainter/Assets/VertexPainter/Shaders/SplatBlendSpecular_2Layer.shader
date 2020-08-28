@@ -68,59 +68,9 @@ Shader "VertexPainter/SplatBlendSpecular_2Layer"
 			ENDCG
 		}
 
-		Pass
-		{
-			Name "FORWARD_DELTA"
-			Tags { "LightMode" = "ForwardAdd" }
-			ZWrite Off
-			Blend One One
-			Fog { Color(0,0,0,0) }
-			ZTest LEqual
-
-			CGPROGRAM
-			#pragma vertex VSMain
-			#pragma fragment PSMain
-			#pragma target 3.0
-			#pragma multi_compile_fwdadd
-			#pragma multi_compile_fwdadd_fullshadows
-			#pragma multi_compile_fog
-			#include "SplatBlend_ForwardAdd.cginc"
-			ENDCG
-		}
-
-		Pass
-		{
-			Name "SHADOW_CASTER"
-			Tags { "LightMode" = "ShadowCaster" }
-			ZWrite On ZTest LEqual
-			CGPROGRAM
-			#pragma target 3.0
-			#pragma shader_feature_local _ _ALPHATEST_ON _ALPHABLEND_ON _ALPHAPREMULTIPLY_ON
-			#pragma multi_compile_shadowcaster
-			#pragma multi_compile_instancing
-			#pragma vertex vertShadowCaster
-			#pragma fragment fragShadowCaster
-			#include "UnityStandardShadow.cginc"
-			ENDCG
-		}
-
-		Pass
-		{
-			Name "META"
-			Tags { "LightMode" = "Meta" }
-			Cull Off
-			CGPROGRAM
-			#pragma vertex vert_meta
-			#pragma fragment frag_meta
-			#pragma shader_feature _EMISSION
-			#pragma shader_feature_local _METALLICGLOSSMAP
-			#pragma shader_feature_local _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-			#pragma shader_feature_local _DETAIL_MULX2
-			#pragma shader_feature EDITOR_VISUALIZATION
-			#include "UnityStandardMeta.cginc"
-			ENDCG
-		}
-
+		UsePass "VertexPainter/SplatBlendSpecular_1Layer/FORWARD_DELTA"
+		UsePass "VertexPainter/SplatBlendSpecular_1Layer/SHADOW_CASTER"
+		UsePass "VertexPainter/SplatBlendSpecular_1Layer/META"
 	}
 	CustomEditor "VertexPainter.CustomShaderGUI"
 	FallBack Off
