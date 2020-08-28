@@ -31,83 +31,76 @@ namespace VertexPainter
 			"Three",
 		};
 
+		private bool[] layerFoldOuts = new bool[CHANNEL_NAMES.Length];
+
 		private CullingMode cullingMode;
 
-		private void DrawLayer(MaterialEditor editor, int i, MaterialProperty[] props, string[] keyWords, bool hasGloss, bool hasSpec, bool isParallax, bool hasEmis, bool hasDistBlend)
+		private static int GetLayerCount(string shaderName)
 		{
-			EditorGUIUtility.labelWidth = 0f;
-			var albedoMap = FindProperty("_Tex" + i, props);
-			var tint = FindProperty("_Tint" + i, props);
-			var normalMap = FindProperty("_Normal" + i, props);
-			var smoothness = FindProperty("_Glossiness" + i, props);
-			var glossinessMap = FindProperty("_GlossinessTex" + i, props, false);
-			var metallic = FindProperty("_Metallic" + i, props, false);
-			var emissionTex = FindProperty("_Emissive" + i, props);
-			var emissionMult = FindProperty("_EmissiveMult" + i, props);
-			var parallax = FindProperty("_Parallax" + i, props);
-			var texScale = FindProperty("_TexScale" + i, props);
-			var specMap = FindProperty("_SpecGlossMap" + i, props, false);
-			var specColor = FindProperty("_SpecColor" + i, props, false);
-			var distUVScale = FindProperty("_DistUVScale" + i, props, false);
-
-			editor.TexturePropertySingleLine(new GUIContent("Albedo/Height"), albedoMap);
-			editor.ShaderProperty(tint, "Tint");
-			editor.TexturePropertySingleLine(new GUIContent("Normal"), normalMap);
-			editor.TexturePropertySingleLine(new GUIContent("Specular(RGB)/Gloss(A)"), specMap);
-			editor.ShaderProperty(smoothness, "Smoothness");
-			editor.ShaderProperty(specColor, "Specular Color");
-			editor.TexturePropertySingleLine(new GUIContent("Emission"), emissionTex);
-			editor.ShaderProperty(emissionMult, "Emissive Multiplier");
-
-			editor.ShaderProperty(texScale, "Texture Scale");
-			if (hasDistBlend)
+			int layerCount = (int)FlowChannel.None;
+			if (shaderName == "VertexPainter/Surface_1Layer")
 			{
-				editor.ShaderProperty(distUVScale, "Distance UV Scale");
+				layerCount = (int)FlowChannel.One;
 			}
-			if (isParallax)
+			else if (shaderName == "VertexPainter/Surface_2Layer")
 			{
-				editor.ShaderProperty(parallax, "Parallax Height");
+				layerCount = (int)FlowChannel.Two;
 			}
+			else if (shaderName == "VertexPainter/Surface_3Layer")
+			{
+				layerCount = (int)FlowChannel.Three;
+			}
+			return layerCount;
+		}
 
-			if (i != 1)
+		private static FlowChannel GetFlowChannel(string[] keyWords)
+		{
+			FlowChannel flowChannel = FlowChannel.None;
+			if (keyWords.Contains("_FLOW1"))
 			{
-				editor.ShaderProperty(FindProperty("_Contrast" + i, props), "Interpolation Contrast");
+				flowChannel = FlowChannel.One;
 			}
+			if (keyWords.Contains("_FLOW2"))
+			{
+				flowChannel = FlowChannel.Two;
+			}
+			if (keyWords.Contains("_FLOW3"))
+			{
+				flowChannel = FlowChannel.Three;
+			}
+			return flowChannel;
+		}
+
+		private static bool Foldout(bool display, string title)
+		{
+			var style = new GUIStyle("ShurikenModuleTitle");
+			style.font = new GUIStyle(EditorStyles.boldLabel).font;
+			style.border = new RectOffset(15, 7, 4, 4);
+			style.fixedHeight = 22;
+			style.contentOffset = new Vector2(20f, -2f);
+			var rect = GUILayoutUtility.GetRect(16f, 22f, style);
+			GUI.Box(rect, title, style);
+			var e = Event.current;
+			var toggleRect = new Rect(rect.x + 4f, rect.y + 2f, 13f, 13f);
+			if (e.type == EventType.Repaint)
+			{
+				EditorStyles.foldout.Draw(toggleRect, false, false, display, false);
+			}
+			if (e.type == EventType.MouseDown && rect.Contains(e.mousePosition))
+			{
+				display = !display;
+				e.Use();
+			}
+			return display;
 		}
 
 		public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] props)
 		{
 			Material targetMat = materialEditor.target as Material;
 			string[] keyWords = targetMat.shaderKeywords;
+			int layerCount = GetLayerCount(targetMat.shader.name);
 
-			int layerCount = (int)FlowChannel.None;
-			if (targetMat.shader.name == "VertexPainter/Surface_1Layer")
-			{
-				layerCount = (int)FlowChannel.One;
-			}
-			else if (targetMat.shader.name == "VertexPainter/Surface_2Layer")
-			{
-				layerCount = (int)FlowChannel.Two;
-			}
-			else if (targetMat.shader.name == "VertexPainter/Surface_3Layer")
-			{
-				layerCount = (int)FlowChannel.Three;
-			}
-
-			FlowChannel fchannel = FlowChannel.None;
-			if (keyWords.Contains("_FLOW1"))
-			{
-				fchannel = FlowChannel.One;
-			}
-			if (keyWords.Contains("_FLOW2"))
-			{
-				fchannel = FlowChannel.Two;
-			}
-			if (keyWords.Contains("_FLOW3"))
-			{
-				fchannel = FlowChannel.Three;
-			}
-
+			FlowChannel flowChannel = GetFlowChannel(keyWords);
 			bool flowDrift = keyWords.Contains("_FLOWDRIFT");
 			bool flowRefraction = keyWords.Contains("_FLOWREFRACTION");
 			bool parallax = keyWords.Contains("_PARALLAXMAP");
@@ -159,16 +152,23 @@ namespace VertexPainter
 				}
 			}
 
+			// Setting LayerGUI
+			EditorGUILayout.Space();
 			for (int i = 0; i < layerCount; ++i)
 			{
-				DrawLayer(materialEditor, i + 1, props, keyWords, hasGloss, hasSpec, parallax, hasEmis, hasDistBlend);
-				EditorGUILayout.Space();
+				layerFoldOuts[i] = Foldout(layerFoldOuts[i], "Layer " + (i + 1) + " Setting");
+				if (layerFoldOuts[i])
+				{
+					EditorGUI.indentLevel++;
+					EditorGUILayout.Space();
+					DrawLayer(materialEditor, i + 1, props, keyWords, hasGloss, hasSpec, parallax, hasEmis, hasDistBlend);
+					EditorGUI.indentLevel--;
+				}
 			}
-
 			EditorGUILayout.Space();
 
-			fchannel = (FlowChannel)EditorGUILayout.Popup((int)fchannel, CHANNEL_NAMES);
-			if (fchannel != FlowChannel.None)
+			flowChannel = (FlowChannel)EditorGUILayout.Popup((int)flowChannel, CHANNEL_NAMES);
+			if (flowChannel != FlowChannel.None)
 			{
 				var flowSpeed = FindProperty("_FlowSpeed", props);
 				var flowIntensity = FindProperty("_FlowIntensity", props);
@@ -188,11 +188,9 @@ namespace VertexPainter
 				}
 				flowDrift = EditorGUILayout.Toggle("Flow Drift", flowDrift);
 			}
-
 			if (EditorGUI.EndChangeCheck())
 			{
 				var newKeywords = new List<string>();
-
 				newKeywords.Add("_LAYERS" + layerCount.ToString());
 				if (hasDistBlend)
 				{
@@ -214,11 +212,10 @@ namespace VertexPainter
 				{
 					newKeywords.Add("_EMISSION");
 				}
-				if (fchannel != FlowChannel.None)
+				if (flowChannel != FlowChannel.None)
 				{
-					newKeywords.Add("_FLOW" + (int)fchannel);
+					newKeywords.Add("_FLOW" + (int)flowChannel);
 				}
-
 				if (flowDrift)
 				{
 					newKeywords.Add("_FLOWDRIFT");
@@ -229,6 +226,46 @@ namespace VertexPainter
 				}
 				targetMat.shaderKeywords = newKeywords.ToArray();
 				EditorUtility.SetDirty(targetMat);
+			}
+		}
+
+		private void DrawLayer(MaterialEditor editor, int i, MaterialProperty[] props, string[] keyWords, bool hasGloss, bool hasSpec, bool isParallax, bool hasEmis, bool hasDistBlend)
+		{
+			EditorGUIUtility.labelWidth = 0f;
+			var albedoMap = FindProperty("_Tex" + i, props);
+			var tint = FindProperty("_Tint" + i, props);
+			var normalMap = FindProperty("_Normal" + i, props);
+			var smoothness = FindProperty("_Glossiness" + i, props);
+			//var glossinessMap = FindProperty("_GlossinessTex" + i, props, false);
+			//var metallic = FindProperty("_Metallic" + i, props, false);
+			var emissionTex = FindProperty("_Emissive" + i, props);
+			var emissionMult = FindProperty("_EmissiveMult" + i, props);
+			var parallax = FindProperty("_Parallax" + i, props);
+			var texScale = FindProperty("_TexScale" + i, props);
+			var specMap = FindProperty("_SpecGlossMap" + i, props, false);
+			var specColor = FindProperty("_SpecColor" + i, props, false);
+			var distUVScale = FindProperty("_DistUVScale" + i, props, false);
+
+			editor.TexturePropertySingleLine(new GUIContent("Base Texture"), albedoMap, tint);
+			editor.TexturePropertySingleLine(new GUIContent("Specular(RGB)/Gloss(A)"), specMap, specColor);
+			editor.TexturePropertySingleLine(new GUIContent("Normal"), normalMap);
+			editor.TexturePropertySingleLine(new GUIContent("Emission"), emissionTex);
+			editor.ShaderProperty(smoothness, "Smoothness");
+			editor.ShaderProperty(emissionMult, "Emissive Multiplier");
+			editor.ShaderProperty(texScale, "Texture Scale");
+
+			if (hasDistBlend)
+			{
+				editor.ShaderProperty(distUVScale, "Distance UV Scale");
+			}
+			if (isParallax)
+			{
+				editor.ShaderProperty(parallax, "Parallax Height");
+			}
+
+			if (i > 1)
+			{
+				editor.ShaderProperty(FindProperty("_Contrast" + i, props), "Interpolation Contrast");
 			}
 		}
 
