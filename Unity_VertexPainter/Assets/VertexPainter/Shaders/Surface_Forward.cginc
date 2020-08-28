@@ -25,11 +25,11 @@ float _DistBlendMax;
 
 struct Input 
 {
-    float2 uv_MainTex;
-    float4 color;
-    float3 worldPos;
-    float3 worldNormal;
-    float4 flowDir;
+	float2 uv_MainTex;
+	float4 color;
+	float3 worldPos;
+	float3 worldNormal;
+	float4 flowDir;
 };
 
 struct PSInput
@@ -96,21 +96,21 @@ UNITY_INSTANCING_BUFFER_END(Props)
 
 half HeightBlend(half h1, half h2, half slope, half contrast)
 {
-   h2 = 1-h2;
-   half tween = saturate( ( slope - min( h1, h2 ) ) / max(abs( h1 - h2 ), 0.001)); 
-   half threshold = contrast;
-   half width = 1.0 - contrast;
-   return saturate( ( tween - threshold ) / max(width, 0.001) );
+	h2 = 1-h2;
+	half tween = saturate( ( slope - min( h1, h2 ) ) / max(abs( h1 - h2 ), 0.001)); 
+	half threshold = contrast;
+	half width = 1.0 - contrast;
+	return saturate( ( tween - threshold ) / max(width, 0.001) );
 }
 
 void Flow(float2 uv, half2 flow, half speed, float intensity, out float2 uv1, out float2 uv2, out half interp)
 {
-   float2 flowVector = (flow * 2.0 - 1.0) * intensity;  
-   float timeScale = _Time.y * speed;
-   float2 phase = frac(float2(timeScale, timeScale + .5));
-   uv1 = (uv - flowVector * half2(phase.x, phase.x));
-   uv2 = (uv - flowVector * half2(phase.y, phase.y));   
-   interp = abs(0.5 - phase.x) / 0.5;
+	float2 flowVector = (flow * 2.0 - 1.0) * intensity;  
+	float timeScale = _Time.y * speed;
+	float2 phase = frac(float2(timeScale, timeScale + .5));
+	uv1 = (uv - flowVector * half2(phase.x, phase.x));
+	uv2 = (uv - flowVector * half2(phase.y, phase.y));   
+	interp = abs(0.5 - phase.x) / 0.5;
 }
 
 PSInput VSMain(appdata_full  v)
@@ -125,21 +125,21 @@ PSInput VSMain(appdata_full  v)
 	o.worldNormal = worldNormal;
 	o.pos = UnityObjectToClipPos(v.vertex);
 	o.uv = v.texcoord;
-    o.color = v.color;
+	o.color = v.color;
 
 #if (_FLOW1 || _FLOW2 || _FLOW3)
-    o.flowDir.xy = v.texcoord.xy;
-    o.flowDir.zw = v.texcoord2.xy;
+	o.flowDir.xy = v.texcoord.xy;
+	o.flowDir.zw = v.texcoord2.xy;
 #endif
     
 #if (_FLOW1)
-    o.flowDir.xy *= _TexScale1;
+	o.flowDir.xy *= _TexScale1;
 #endif
 #if (_FLOW2)
-    o.flowDir.xy *= _TexScale2;
+	o.flowDir.xy *= _TexScale2;
 #endif
 #if (_FLOW3)
-    o.flowDir.xy *= _TexScale3; 
+	o.flowDir.xy *= _TexScale3; 
 #endif
 
 #ifdef DYNAMICLIGHTMAP_ON
