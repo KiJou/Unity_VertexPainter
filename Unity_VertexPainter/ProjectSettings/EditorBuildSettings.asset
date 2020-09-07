@@ -4,5 +4,8 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/VertexPainter/Demo/Scenes/Main.unity
+    guid: af9178b0bddae754584791097fea17e6
   m_configObjects: {}
